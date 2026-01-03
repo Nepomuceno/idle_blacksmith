@@ -1,0 +1,443 @@
+[gd_scene load_steps=10 format=3 uid="uid://bxmain123"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="FontFile" path="res://assets/ui/Font/Kenney Future.ttf" id="2_font"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header"]
+bg_color = Color(0.08, 0.06, 0.12, 0.98)
+border_width_bottom = 3
+border_color = Color(1, 0.7, 0.2, 0.8)
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_content"]
+bg_color = Color(0.05, 0.04, 0.08, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_bar"]
+bg_color = Color(0.1, 0.08, 0.15, 0.98)
+border_width_top = 2
+border_color = Color(0.3, 0.25, 0.4, 0.8)
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_forge_panel"]
+bg_color = Color(0.08, 0.05, 0.03, 0.95)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1, 0.5, 0.2, 0.8)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+shadow_color = Color(1, 0.4, 0.1, 0.3)
+shadow_size = 8
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_weapon_icon"]
+bg_color = Color(0.03, 0.03, 0.05, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1, 0.6, 0.2, 0.9)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(1, 0.5, 0.1, 0.4)
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_forge_button"]
+bg_color = Color(0.8, 0.3, 0.1, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 6
+border_color = Color(1, 0.6, 0.2, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(1, 0.3, 0, 0.5)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_scroll_panel"]
+bg_color = Color(0.08, 0.06, 0.12, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3, 0.3, 0.4, 0.5)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 12.0
+content_margin_top = 12.0
+content_margin_right = 12.0
+content_margin_bottom = 12.0
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.03, 0.02, 0.05, 1)
+
+[node name="MainLayout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 0
+
+[node name="Header" type="PanelContainer" parent="MainLayout"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_header")
+
+[node name="HeaderContent" type="HBoxContainer" parent="MainLayout/Header"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="GoldLabel" type="Label" parent="MainLayout/Header/HeaderContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 28
+text = "0 Gold"
+
+[node name="PassiveLabel" type="Label" parent="MainLayout/Header/HeaderContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 1, 0.4, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 14
+text = ""
+
+[node name="Spacer" type="Control" parent="MainLayout/Header/HeaderContent"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AscensionLabel" type="Label" parent="MainLayout/Header/HeaderContent"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.5, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 16
+text = "0 Souls"
+
+[node name="ContentArea" type="PanelContainer" parent="MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_content")
+
+[node name="ForgeContent" type="MarginContainer" parent="MainLayout/ContentArea"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="ForgeLayout" type="VBoxContainer" parent="MainLayout/ContentArea/ForgeContent"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="WeaponGridScroll" type="ScrollContainer" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+vertical_scroll_mode = 0
+
+[node name="WeaponGrid" type="HBoxContainer" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/WeaponGridScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 8
+
+[node name="ForgePanel" type="PanelContainer" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_forge_panel")
+
+[node name="ForgeVBox" type="VBoxContainer" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="WeaponIconContainer" type="CenterContainer" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel/ForgeVBox"]
+layout_mode = 2
+
+[node name="WeaponIconPanel" type="PanelContainer" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel/ForgeVBox/WeaponIconContainer"]
+custom_minimum_size = Vector2(120, 120)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_weapon_icon")
+
+[node name="MainWeaponIcon" type="TextureRect" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel/ForgeVBox/WeaponIconContainer/WeaponIconPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MainWeaponLetter" type="Label" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel/ForgeVBox/WeaponIconContainer/WeaponIconPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.5, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 56
+text = "S"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="WeaponNameLabel" type="Label" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel/ForgeVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0.3, 0.15, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 26
+text = "Sword"
+horizontal_alignment = 1
+
+[node name="ValueLabel" type="Label" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel/ForgeVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 14
+text = "Value: 1"
+horizontal_alignment = 1
+
+[node name="LastForgedLabel" type="Label" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel/ForgeVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 16
+text = ""
+horizontal_alignment = 1
+
+[node name="StreakLabel" type="Label" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel/ForgeVBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 13
+text = "Forged: 0"
+horizontal_alignment = 1
+
+[node name="ForgeButtonContainer" type="CenterContainer" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel/ForgeVBox"]
+layout_mode = 2
+
+[node name="ForgeButton" type="Button" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel/ForgeVBox/ForgeButtonContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 100)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 0.9, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 0.6, 1)
+theme_override_colors/font_outline_color = Color(0.3, 0.1, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = SubResource("StyleBoxFlat_forge_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_forge_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_forge_button")
+text = "FORGE!"
+
+[node name="AscensionSection" type="VBoxContainer" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel/ForgeVBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="AscensionTitle" type="Label" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel/ForgeVBox/AscensionSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.5, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 12
+text = "Ascension Progress"
+horizontal_alignment = 1
+
+[node name="AscensionProgress" type="ProgressBar" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel/ForgeVBox/AscensionSection"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 18)
+layout_mode = 2
+size_flags_horizontal = 4
+max_value = 100.0
+value = 0.0
+show_percentage = true
+
+[node name="AscendButton" type="Button" parent="MainLayout/ContentArea/ForgeContent/ForgeLayout/ForgePanel/ForgeVBox/AscensionSection"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(200, 55)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 20
+text = "ASCEND +0"
+
+[node name="UpgradesContent" type="MarginContainer" parent="MainLayout/ContentArea"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="UpgradesPanel" type="PanelContainer" parent="MainLayout/ContentArea/UpgradesContent"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_scroll_panel")
+
+[node name="UpgradesScroll" type="ScrollContainer" parent="MainLayout/ContentArea/UpgradesContent/UpgradesPanel"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="UpgradesList" type="VBoxContainer" parent="MainLayout/ContentArea/UpgradesContent/UpgradesPanel/UpgradesScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="StatsContent" type="MarginContainer" parent="MainLayout/ContentArea"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="StatsPanel" type="PanelContainer" parent="MainLayout/ContentArea/StatsContent"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_scroll_panel")
+
+[node name="StatsScroll" type="ScrollContainer" parent="MainLayout/ContentArea/StatsContent/StatsPanel"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="StatsText" type="RichTextLabel" parent="MainLayout/ContentArea/StatsContent/StatsPanel/StatsScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "Loading..."
+
+[node name="AchieveContent" type="MarginContainer" parent="MainLayout/ContentArea"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="AchievePanel" type="PanelContainer" parent="MainLayout/ContentArea/AchieveContent"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_scroll_panel")
+
+[node name="AchieveScroll" type="ScrollContainer" parent="MainLayout/ContentArea/AchieveContent/AchievePanel"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="AchieveList" type="VBoxContainer" parent="MainLayout/ContentArea/AchieveContent/AchievePanel/AchieveScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="ShopContent" type="MarginContainer" parent="MainLayout/ContentArea"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ShopPanel" type="PanelContainer" parent="MainLayout/ContentArea/ShopContent"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_scroll_panel")
+
+[node name="ShopScroll" type="ScrollContainer" parent="MainLayout/ContentArea/ShopContent/ShopPanel"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="ShopList" type="VBoxContainer" parent="MainLayout/ContentArea/ShopContent/ShopPanel/ShopScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="TabBar" type="PanelContainer" parent="MainLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_tab_bar")
+
+[node name="TabButtons" type="HBoxContainer" parent="MainLayout/TabBar"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TabForge" type="Button" parent="MainLayout/TabBar/TabButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 55)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 15
+text = "FORGE"
+
+[node name="TabUpgrades" type="Button" parent="MainLayout/TabBar/TabButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 55)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 15
+text = "UPGRADES"
+
+[node name="TabAchieve" type="Button" parent="MainLayout/TabBar/TabButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 55)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 15
+text = "ACHIEVE"
+
+[node name="TabShop" type="Button" parent="MainLayout/TabBar/TabButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 55)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 15
+text = "SHOP"

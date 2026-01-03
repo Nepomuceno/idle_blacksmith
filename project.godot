@@ -1,0 +1,51 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Idle Blacksmith"
+config/description="A fantasy idle game where you forge legendary weapons, collect gold, and ascend to gain permanent bonuses!"
+run/main_scene="res://scenes/splash.tscn"
+config/features=PackedStringArray("4.5", "Forward Plus")
+config/icon="res://icon.svg"
+
+[autoload]
+
+GameEvents="*res://scripts/autoload/game_events.gd"
+AdManager="*res://scripts/managers/ad_manager.gd"
+
+[display]
+
+window/size/viewport_width=480
+window/size/viewport_height=800
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+
+[gut]
+
+directory="res://tests"
+include_subdirs=true
+prefix="test_"
+suffix=".gd"
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+textures/vram_compression/import_etc2_astc=true
+renderer/rendering_method="gl_compatibility"

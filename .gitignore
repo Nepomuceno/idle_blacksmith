@@ -1,0 +1,45 @@
+# Godot 4+ specific ignores
+.godot/
+
+# Godot-specific ignores
+*.translation
+
+# Imported textures and samples
+.import/
+
+# Exported builds
+builds/
+*.exe
+*.x86_64
+*.apk
+*.aab
+*.ipa
+*.app
+
+# Mono-specific ignores
+.mono/
+data_*/
+mono_crash.*.json
+
+# System/IDE files
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+*.code-workspace
+
+# Keystore files (keep these private!)
+*.keystore
+*.jks
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Export presets may contain sensitive info (team IDs, etc.)
+# Uncomment if you want to keep these private:
+# export_presets.cfg
