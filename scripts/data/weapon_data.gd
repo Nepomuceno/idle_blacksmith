@@ -48,13 +48,13 @@ const WEAPONS: Dictionary = {
 }
 
 const BASE_VALUES: Dictionary = {
-	"sword": 1.0,
-	"dagger": 0.8,
-	"axe": 1.2,
-	"bow": 1.0,
-	"spear": 1.1,
-	"mace": 1.3,
-	"staff": 1.5
+	"sword": 1.0,    # Base weapon
+	"dagger": 1.05,  # Asc 1 - slightly better
+	"axe": 1.10,     # Asc 2 - 10% better than sword
+	"bow": 1.15,     # Asc 3
+	"spear": 1.20,   # Asc 5
+	"mace": 1.25,    # Asc 7
+	"staff": 1.30    # Asc 10 - 30% better than sword base
 }
 
 const UNLOCK_ASCENSIONS: Dictionary = {

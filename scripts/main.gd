@@ -76,8 +76,10 @@ var ascend_sound: AudioStreamPlayer
 var passive_timer: float = 0.0
 var autosave_timer: float = 0.0
 var auto_forge_timer: float = 0.0
+var last_tier_effect_time: float = 0.0
 const PASSIVE_TICK: float = 1.0
 const AUTOSAVE_INTERVAL: float = 30.0
+const MIN_TIER_EFFECT_INTERVAL: float = 0.15  # Max ~6 effects per second
 
 
 func _ready() -> void:
@@ -88,7 +90,11 @@ func _ready() -> void:
 	_connect_signals()
 	_setup_tab_buttons()
 	_check_layout()
-	_show_tab("forge")
+	
+	# Only show tab in mobile mode - wide layout handles visibility differently
+	if not is_wide_layout:
+		_show_tab("forge")
+	
 	_update_all_ui()
 	
 	scene_ready = true
@@ -107,6 +113,9 @@ func _init_game_systems() -> void:
 	
 	# Load saved game
 	save_manager.load_game()
+	
+	# Connect theme colors to game state for ascension intensity
+	ThemeColors.set_intensity_from_ascensions(game_state.total_ascensions)
 
 
 func _cache_node_references() -> void:
@@ -242,9 +251,37 @@ func _process(delta: float) -> void:
 	if auto_rate > 0:
 		auto_forge_timer += delta
 		var forge_interval = 1.0 / auto_rate
-		while auto_forge_timer >= forge_interval:
-			auto_forge_timer -= forge_interval
-			_do_auto_forge()
+		var forges_pending = int(auto_forge_timer / forge_interval)
+		
+		if forges_pending <= 0:
+			pass  # Nothing to do yet
+		elif forges_pending <= 10:
+			# Low rate: process individually for accurate tier rolling
+			auto_forge_timer -= forges_pending * forge_interval
+			var best_tier = 0
+			var best_tier_color = Color.WHITE
+			
+			for i in range(forges_pending):
+				var result = forge_manager.forge()
+				if result["tier"] > best_tier:
+					best_tier = result["tier"]
+					best_tier_color = result["tier_color"]
+			
+			# Show effect for best tier (with cooldown)
+			var current_time = Time.get_ticks_msec() / 1000.0
+			if best_tier >= 2 and (current_time - last_tier_effect_time) >= MIN_TIER_EFFECT_INTERVAL:
+				last_tier_effect_time = current_time
+				_spawn_tier_effect(best_tier, best_tier_color)
+		else:
+			# High rate: use bulk calculation for performance
+			auto_forge_timer -= forges_pending * forge_interval
+			var result = forge_manager.bulk_forge(forges_pending)
+			
+			# Show effect for best tier (with cooldown)
+			var current_time = Time.get_ticks_msec() / 1000.0
+			if result["best_tier"] >= 2 and (current_time - last_tier_effect_time) >= MIN_TIER_EFFECT_INTERVAL:
+				last_tier_effect_time = current_time
+				_spawn_tier_effect(result["best_tier"], result["best_tier_color"])
 	
 	# Autosave
 	autosave_timer += delta
@@ -298,6 +335,8 @@ func _on_ascend_requested() -> void:
 			ascend_sound.play()
 		_show_ascension_effect(souls)
 		forge_ui.create_weapon_grid()
+		# Update theme intensity based on new ascension count
+		ThemeColors.set_intensity_from_ascensions(game_state.total_ascensions)
 		_update_all_ui()
 
 
@@ -309,7 +348,7 @@ func _on_upgrade_purchased(upgrade_id: String) -> void:
 
 
 func _on_rewards_claimed(amount: float) -> void:
-	_spawn_floating_text("+%s Gold!" % GameStateClass.format_number(amount), Color(1, 0.85, 0.2))
+	_spawn_floating_text("+%s Gold!" % GameStateClass.format_number(amount), ThemeColors.GOLD_TEXT)
 	if upgrade_sound.stream:
 		upgrade_sound.play()
 	_update_gold_display()
@@ -335,6 +374,9 @@ func _on_reset_requested() -> void:
 
 func _on_gold_changed(_new_amount: float) -> void:
 	_update_gold_display()
+	# In wide layout, upgrades are always visible so refresh them
+	if is_wide_layout:
+		upgrades_ui.refresh()
 
 
 func _on_achievement_unlocked(achievement_id: String) -> void:
@@ -365,30 +407,30 @@ func _show_tab(tab_name: String) -> void:
 		achieve_content_ref.visible = false
 		shop_content_ref.visible = false
 	
-	tab_forge_ref.modulate = Color(0.6, 0.6, 0.6)
-	tab_upgrades_ref.modulate = Color(0.6, 0.6, 0.6)
-	tab_achieve_ref.modulate = Color(0.6, 0.6, 0.6)
-	tab_shop_ref.modulate = Color(0.6, 0.6, 0.6)
+	tab_forge_ref.modulate = ThemeColors.STEEL_LIGHT
+	tab_upgrades_ref.modulate = ThemeColors.STEEL_LIGHT
+	tab_achieve_ref.modulate = ThemeColors.STEEL_LIGHT
+	tab_shop_ref.modulate = ThemeColors.STEEL_LIGHT
 	
 	match tab_name:
 		"forge":
 			if forge_content_ref:
 				forge_content_ref.visible = true
-			tab_forge_ref.modulate = Color(1.2, 1.0, 0.6)
+			tab_forge_ref.modulate = ThemeColors.ACCENT_SECONDARY
 		"upgrades":
 			if upgrades_content_ref:
 				upgrades_content_ref.visible = true
-			tab_upgrades_ref.modulate = Color(0.6, 1.2, 0.6)
+			tab_upgrades_ref.modulate = ThemeColors.COLOR_PASSIVE
 			upgrades_ui.refresh()
 		"achieve":
 			if achieve_content_ref:
 				achieve_content_ref.visible = true
-			tab_achieve_ref.modulate = Color(1.2, 0.9, 0.3)
+			tab_achieve_ref.modulate = ThemeColors.GOLD_TEXT
 			achievements_ui.refresh()
 		"shop":
 			if shop_content_ref:
 				shop_content_ref.visible = true
-			tab_shop_ref.modulate = Color(1.0, 0.6, 1.2)
+			tab_shop_ref.modulate = ThemeColors.COLOR_SOULS
 			shop_ui.refresh()
 
 
@@ -448,6 +490,8 @@ func _setup_wide_layout() -> void:
 			wide_nav_container.visible = true
 		achieve_content_ref.visible = false
 		shop_content_ref.visible = false
+		# Refresh upgrades UI when switching back to wide layout
+		upgrades_ui.refresh()
 		return
 	
 	forge_content_ref.get_parent().remove_child(forge_content_ref)
@@ -560,6 +604,10 @@ func _setup_mobile_layout() -> void:
 func _update_all_ui() -> void:
 	_update_gold_display()
 	forge_ui.update_display()
+	
+	# In wide layout, upgrades are always visible so refresh them
+	if is_wide_layout:
+		upgrades_ui.refresh()
 
 
 func _update_gold_display() -> void:
@@ -582,7 +630,7 @@ func _update_gold_display() -> void:
 	# Ascension label
 	if game_state.total_ascensions > 0 or game_state.ancient_souls > 0:
 		ascension_label_ref.visible = true
-		ascension_label_ref.text = "%d Souls | Asc %d" % [game_state.ancient_souls, game_state.total_ascensions]
+		ascension_label_ref.text = "%s Souls | Asc %d" % [GameStateClass.format_souls(game_state.ancient_souls), game_state.total_ascensions]
 	else:
 		ascension_label_ref.visible = false
 
@@ -630,7 +678,15 @@ func _spawn_forge_sparks() -> void:
 func _spawn_tier_effect(tier: int, color: Color) -> void:
 	var forge_center = forge_ui.forge_button.global_position + forge_ui.forge_button.size / 2
 	
-	var particle_count = [0, 0, 8, 15, 25][tier]
+	# Reduce particles at high forge rates to prevent visual overload
+	var auto_rate = forge_manager.get_effective_auto_forge_rate()
+	var particle_scale = 1.0
+	if auto_rate > 10:
+		particle_scale = clampf(10.0 / auto_rate, 0.2, 1.0)
+	
+	var base_particle_count = [0, 0, 8, 15, 25][tier]
+	var particle_count = int(base_particle_count * particle_scale)
+	particle_count = maxi(particle_count, 2) if base_particle_count > 0 else 0
 	
 	for i in range(particle_count):
 		var particle = ColorRect.new()
@@ -659,7 +715,8 @@ func _spawn_tier_effect(tier: int, color: Color) -> void:
 		tween.set_parallel(false)
 		tween.tween_callback(particle.queue_free)
 	
-	if tier >= 4:
+	# Only flash screen if not in rapid fire mode
+	if tier >= 4 and auto_rate < 20:
 		_flash_screen(color)
 
 

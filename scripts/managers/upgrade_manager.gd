@@ -4,6 +4,10 @@ extends RefCounted
 
 const UpgradeData = preload("res://scripts/data/upgrade_data.gd")
 
+# Diminishing returns for multipliers - each subsequent multiplier is less effective
+# Formula: effective_mult = 1 + (base_mult - 1) * MULTIPLIER_DIMINISH^total_purchased
+const MULTIPLIER_DIMINISH: float = 0.75
+
 var game_state
 
 
@@ -53,9 +57,30 @@ func is_visible(upgrade_id: String) -> bool:
 
 func get_visible_upgrades() -> Array:
 	var visible = []
-	for upgrade_id in UpgradeData.get_upgrade_ids():
-		if is_visible(upgrade_id) and not is_maxed(upgrade_id):
+	var found_unaffordable = false
+	
+	# Get all upgrades sorted by base cost
+	var all_upgrades = UpgradeData.get_upgrade_ids()
+	var sorted_upgrades = []
+	for upgrade_id in all_upgrades:
+		var data = UpgradeData.get_upgrade(upgrade_id)
+		sorted_upgrades.append({"id": upgrade_id, "cost": data.get("base_cost", 0.0)})
+	sorted_upgrades.sort_custom(func(a, b): return a.cost < b.cost)
+	
+	for item in sorted_upgrades:
+		var upgrade_id = item.id
+		if is_maxed(upgrade_id):
+			continue
+		
+		if is_visible(upgrade_id):
 			visible.append(upgrade_id)
+			if not can_afford(upgrade_id):
+				found_unaffordable = true
+		elif not found_unaffordable:
+			# Show the next upgrade we haven't discovered yet (teaser)
+			visible.append(upgrade_id)
+			found_unaffordable = true
+	
 	return visible
 
 
@@ -80,35 +105,67 @@ func purchase(upgrade_id: String) -> bool:
 func _apply_effect(upgrade_id: String) -> void:
 	var bonus = game_state.get_ascension_bonus()
 	var effect = get_effect(upgrade_id)
+	var data = UpgradeData.get_upgrade(upgrade_id)
+	var effect_type = data.get("effect_type", "")
 	
-	match upgrade_id:
-		"better_anvil":
+	match effect_type:
+		"click_power":
 			game_state.click_power += effect * bonus
-		"apprentice":
+		"passive_income":
 			game_state.passive_income += effect * bonus
 		"auto_forge":
 			game_state.auto_forge_rate += effect
-		"master_smith":
+		"combo":
 			game_state.click_power += effect * bonus
 			game_state.passive_income += (effect * 0.2) * bonus
+		"multiplier":
+			# Apply diminishing returns based on total multipliers already purchased
+			var base_multiplier = _get_multiplier_value(upgrade_id)
+			var effective_multiplier = get_effective_multiplier(base_multiplier)
+			
+			game_state.click_power *= effective_multiplier
+			game_state.passive_income *= effective_multiplier
+			game_state.auto_forge_rate *= effective_multiplier
+			
+			# Track that we purchased another multiplier
+			game_state.total_multipliers_purchased += 1
+
+
+## Calculate effective multiplier after diminishing returns
+## Formula: 1 + (base - 1) * 0.75^total_purchased
+func get_effective_multiplier(base_multiplier: float) -> float:
+	var diminish_factor = pow(MULTIPLIER_DIMINISH, game_state.total_multipliers_purchased)
+	return 1.0 + (base_multiplier - 1.0) * diminish_factor
+
+
+## Get the effective multiplier for display purposes (what player will get if they buy)
+func get_preview_multiplier(upgrade_id: String) -> float:
+	var base_multiplier = _get_multiplier_value(upgrade_id)
+	return get_effective_multiplier(base_multiplier)
+
+
+func _get_multiplier_value(upgrade_id: String) -> float:
+	match upgrade_id:
 		"enchanted_forge":
-			game_state.click_power *= 1.5
-			game_state.passive_income *= 1.5
-			game_state.auto_forge_rate *= 1.5
-		"golden_hammer":
-			game_state.click_power += effect * bonus
-		"forge_masters":
-			game_state.auto_forge_rate += effect
-		"mithril_tools":
-			game_state.passive_income += effect * bonus
+			return 1.5
 		"dragon_bellows":
-			game_state.click_power *= 2.0
-			game_state.passive_income *= 2.0
-			game_state.auto_forge_rate *= 2.0
+			return 2.0
+		"runic_enchantment":
+			return 1.5
 		"time_warp":
-			game_state.click_power *= 3.0
-			game_state.passive_income *= 3.0
-			game_state.auto_forge_rate *= 3.0
+			return 3.0
+		"arcane_anvil":
+			return 2.0
+		"ancient_blessing":
+			return 5.0
+		"celestial_smithy":
+			return 10.0
+		"divine_anvil":
+			return 25.0
+		"cosmic_forge":
+			return 100.0
+		_:
+			return 1.0
 
 
 func get_total_click_power() -> float:

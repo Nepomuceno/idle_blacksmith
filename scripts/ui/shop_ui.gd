@@ -4,6 +4,7 @@ extends Control
 
 const UpgradeData = preload("res://scripts/data/upgrade_data.gd")
 const WeaponData = preload("res://scripts/data/weapon_data.gd")
+const GameState = preload("res://scripts/data/game_state.gd")
 
 signal soul_upgrade_purchased(upgrade_id: String)
 signal weapon_upgrade_purchased(weapon_id: String)
@@ -30,15 +31,15 @@ func refresh() -> void:
 	
 	# Soul count header
 	var souls_label = Label.new()
-	souls_label.text = "Ancient Souls: %d" % game_state.ancient_souls
-	souls_label.add_theme_color_override("font_color", Color(0.8, 0.5, 1))
+	souls_label.text = "Ancient Souls: %s" % GameState.format_souls(game_state.ancient_souls)
+	souls_label.add_theme_color_override("font_color", ThemeColors.COLOR_SOULS)
 	souls_label.add_theme_font_size_override("font_size", 22)
 	souls_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	shop_list.add_child(souls_label)
 	
 	var info_label = Label.new()
 	info_label.text = "Permanent bonuses that persist after Ascension"
-	info_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	info_label.add_theme_color_override("font_color", ThemeColors.STEEL_LIGHT)
 	info_label.add_theme_font_size_override("font_size", 12)
 	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	info_label.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -47,13 +48,13 @@ func refresh() -> void:
 	_add_spacer(10)
 	
 	# Soul upgrades section
-	_add_section_header("SOUL UPGRADES", Color(0.8, 0.5, 1))
+	_add_section_header("SOUL UPGRADES", ThemeColors.COLOR_SOULS)
 	_create_soul_upgrades()
 	
 	_add_spacer(15)
 	
 	# Weapon upgrades section
-	_add_section_header("WEAPON UPGRADES", Color(1, 0.8, 0.3))
+	_add_section_header("WEAPON UPGRADES", ThemeColors.GOLD_TEXT)
 	_create_weapon_upgrades()
 	
 	_add_spacer(20)
@@ -74,7 +75,7 @@ func refresh() -> void:
 	credit_label.text = "Developed by Gabriel Nepomuceno"
 	credit_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	credit_label.add_theme_font_size_override("font_size", 12)
-	credit_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+	credit_label.add_theme_color_override("font_color", ThemeColors.STEEL_DARK)
 	shop_list.add_child(credit_label)
 
 

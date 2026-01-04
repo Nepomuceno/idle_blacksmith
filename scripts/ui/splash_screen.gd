@@ -38,12 +38,43 @@ var _anvil_glow_tween: Tween
 
 
 func _ready() -> void:
+	# Set platform-appropriate window size
+	_configure_window_for_platform()
+	
 	# Select random lore
 	lore_label.text = LORE_SNIPPETS[randi() % LORE_SNIPPETS.size()]
 	
 	# Start animations
 	_start_anvil_animation()
 	_start_loading_sequence()
+
+
+func _configure_window_for_platform() -> void:
+	var os_name = OS.get_name()
+	
+	# Desktop platforms get wide layout by default
+	if os_name in ["Windows", "macOS", "Linux"]:
+		# Set desktop window size (wide layout)
+		var screen_size = DisplayServer.screen_get_size()
+		var window_width = mini(1280, int(screen_size.x * 0.8))
+		var window_height = mini(800, int(screen_size.y * 0.8))
+		
+		# Ensure minimum size for wide layout
+		window_width = maxi(window_width, 1024)
+		window_height = maxi(window_height, 600)
+		
+		DisplayServer.window_set_size(Vector2i(window_width, window_height))
+		
+		# Center window on screen
+		var window_size = DisplayServer.window_get_size()
+		var screen_center = screen_size / 2
+		var window_pos = Vector2i(
+			screen_center.x - window_size.x / 2,
+			screen_center.y - window_size.y / 2
+		)
+		DisplayServer.window_set_position(window_pos)
+	
+	# Mobile platforms use their native orientation (already set in project.godot)
 
 
 func _input(event: InputEvent) -> void:

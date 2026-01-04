@@ -28,7 +28,7 @@ func refresh() -> void:
 	var progress = achievement_manager.get_progress()
 	var progress_label = Label.new()
 	progress_label.text = "Achievements: %d / %d (%.0f%%)" % [progress["unlocked"], progress["total"], progress["percent"]]
-	progress_label.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
+	progress_label.add_theme_color_override("font_color", ThemeColors.GOLD_TEXT)
 	progress_label.add_theme_font_size_override("font_size", 18)
 	progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	achieve_list.add_child(progress_label)
@@ -39,7 +39,7 @@ func refresh() -> void:
 		claim_btn.text = "Claim Rewards: +%s Gold" % GameState.format_number(game_state.pending_achievement_rewards)
 		claim_btn.custom_minimum_size = Vector2(0, 50)
 		claim_btn.add_theme_font_size_override("font_size", 16)
-		claim_btn.add_theme_color_override("font_color", Color(1, 0.9, 0.3))
+		claim_btn.add_theme_color_override("font_color", ThemeColors.GOLD_BRIGHT)
 		claim_btn.pressed.connect(_on_claim_pressed)
 		achieve_list.add_child(claim_btn)
 	
@@ -91,11 +91,11 @@ func _create_achievement_panel(achievement_id: String, is_unlocked: bool) -> Pan
 	
 	var style = StyleBoxFlat.new()
 	if is_unlocked:
-		style.bg_color = Color(0.15, 0.2, 0.15, 0.9)
+		style.bg_color = Color(0.12, 0.16, 0.12, 0.9)
 		style.border_color = Color(0.3, 0.8, 0.3, 0.8)
 	else:
-		style.bg_color = Color(0.1, 0.1, 0.1, 0.7)
-		style.border_color = Color(0.3, 0.3, 0.3, 0.5)
+		style.bg_color = ThemeColors.BG_PANEL.darkened(0.2)
+		style.border_color = ThemeColors.STEEL_DARK
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(8)
 	style.content_margin_left = 12
@@ -118,13 +118,13 @@ func _create_achievement_panel(achievement_id: String, is_unlocked: bool) -> Pan
 	var name_label = Label.new()
 	name_label.text = data.get("name", achievement_id)
 	name_label.add_theme_font_size_override("font_size", 15)
-	name_label.add_theme_color_override("font_color", Color(1, 0.9, 0.6) if is_unlocked else Color(0.6, 0.6, 0.6))
+	name_label.add_theme_color_override("font_color", ThemeColors.GOLD_BRIGHT if is_unlocked else ThemeColors.STEEL_LIGHT)
 	vbox.add_child(name_label)
 	
 	var desc_label = Label.new()
 	desc_label.text = data.get("desc", "")
 	desc_label.add_theme_font_size_override("font_size", 12)
-	desc_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7) if is_unlocked else Color(0.4, 0.4, 0.4))
+	desc_label.add_theme_color_override("font_color", ThemeColors.STEEL_LIGHT if is_unlocked else ThemeColors.STEEL_DARK)
 	vbox.add_child(desc_label)
 	
 	var reward = data.get("reward", 0)
@@ -132,7 +132,7 @@ func _create_achievement_panel(achievement_id: String, is_unlocked: bool) -> Pan
 		var reward_label = Label.new()
 		reward_label.text = "Reward: +%s gold" % GameState.format_number(reward)
 		reward_label.add_theme_font_size_override("font_size", 11)
-		reward_label.add_theme_color_override("font_color", Color(1, 0.8, 0.2) if is_unlocked else Color(0.5, 0.5, 0.4))
+		reward_label.add_theme_color_override("font_color", ThemeColors.GOLD_TEXT if is_unlocked else ThemeColors.STEEL_DARK)
 		vbox.add_child(reward_label)
 	
 	hbox.add_child(vbox)
@@ -146,7 +146,7 @@ func _create_icon_panel(data: Dictionary, is_unlocked: bool) -> PanelContainer:
 	icon_panel.custom_minimum_size = Vector2(44, 44)
 	
 	var icon_style = StyleBoxFlat.new()
-	icon_style.bg_color = Color(0.2, 0.2, 0.25) if is_unlocked else Color(0.1, 0.1, 0.12)
+	icon_style.bg_color = ThemeColors.IRON_ANVIL if is_unlocked else ThemeColors.BG_MAIN
 	icon_style.set_corner_radius_all(6)
 	icon_panel.add_theme_stylebox_override("panel", icon_style)
 	
@@ -165,7 +165,7 @@ func _create_icon_panel(data: Dictionary, is_unlocked: bool) -> PanelContainer:
 		star.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		star.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		star.add_theme_font_size_override("font_size", 24)
-		star.add_theme_color_override("font_color", Color(1, 0.85, 0.2) if is_unlocked else Color(0.4, 0.4, 0.4))
+		star.add_theme_color_override("font_color", ThemeColors.GOLD_TEXT if is_unlocked else ThemeColors.STEEL_DARK)
 		icon_panel.add_child(star)
 	
 	return icon_panel

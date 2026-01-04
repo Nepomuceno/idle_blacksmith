@@ -57,6 +57,9 @@ var ascension_upgrades: Dictionary = {
 	"soul_power": 0, "soul_income": 0, "soul_luck": 0, "soul_forge": 0
 }
 
+# Multiplier tracking for diminishing returns
+var total_multipliers_purchased: int = 0
+
 # Achievements
 var unlocked_achievements: Array = []
 var pending_achievement_rewards: float = 0.0
@@ -128,24 +131,36 @@ func reset() -> void:
 	for key in ascension_upgrades:
 		ascension_upgrades[key] = 0
 	
+	total_multipliers_purchased = 0
 	discovered_upgrades.clear()
 	unlocked_achievements.clear()
 
 
 # Utility functions for formatting
 static func format_number(num: float) -> String:
-	if num >= 100000000000:
+	if num >= 1000000000:
 		var exponent = int(log(num) / log(10))
 		var mantissa = num / pow(10, exponent)
 		return "%.2fe%d" % [mantissa, exponent]
-	elif num >= 1000000000:
-		return "%.2fB" % (num / 1000000000.0)
 	elif num >= 1000000:
 		return "%.2fM" % (num / 1000000.0)
 	elif num >= 1000:
 		return "%.1fK" % (num / 1000.0)
 	else:
 		return "%.0f" % num
+
+
+static func format_souls(num: int) -> String:
+	if num >= 1000000000:
+		var exponent = int(log(float(num)) / log(10))
+		var mantissa = float(num) / pow(10, exponent)
+		return "%.2fe%d" % [mantissa, exponent]
+	elif num >= 1000000:
+		return "%.2fM" % (float(num) / 1000000.0)
+	elif num >= 1000:
+		return "%.1fK" % (float(num) / 1000.0)
+	else:
+		return "%d" % num
 
 
 func get_formatted_gold() -> String:

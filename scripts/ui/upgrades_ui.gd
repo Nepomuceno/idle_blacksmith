@@ -37,8 +37,8 @@ func _create_stats_summary() -> void:
 	stats_panel.custom_minimum_size = Vector2(0, 40)
 	
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.12, 0.12, 0.15, 0.95)
-	style.border_color = Color(0.3, 0.3, 0.35)
+	style.bg_color = ThemeColors.BG_PANEL
+	style.border_color = ThemeColors.BORDER_STEEL
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(6)
 	style.content_margin_left = 12
@@ -75,6 +75,15 @@ func _create_stats_summary() -> void:
 	)
 	stats_hbox.add_child(auto_stat)
 	
+	# Multiplier diminishing indicator (only show if player has purchased multipliers)
+	if game_state.total_multipliers_purchased > 0:
+		var mult_stat = _create_stat_display(
+			"%d" % game_state.total_multipliers_purchased,
+			" mults",
+			UpgradeData.get_effect_color("multiplier")
+		)
+		stats_hbox.add_child(mult_stat)
+	
 	stats_panel.add_child(stats_hbox)
 	upgrades_list.add_child(stats_panel)
 	
@@ -96,7 +105,7 @@ func _create_stat_display(value: String, suffix: String, color: Color) -> HBoxCo
 	var suffix_label = Label.new()
 	suffix_label.text = suffix
 	suffix_label.add_theme_font_size_override("font_size", 11)
-	suffix_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.55))
+	suffix_label.add_theme_color_override("font_color", ThemeColors.STEEL_LIGHT)
 	container.add_child(suffix_label)
 	
 	return container
@@ -122,11 +131,11 @@ func _create_upgrade_card(upgrade_id: String) -> PanelContainer:
 		card_style.bg_color = Color(0.12, 0.16, 0.12, 0.9)
 		card_style.border_color = Color(0.4, 0.7, 0.4, 0.8)
 	elif can_afford:
-		card_style.bg_color = Color(0.14, 0.14, 0.18, 0.95)
+		card_style.bg_color = ThemeColors.BG_PANEL.lightened(0.05)
 		card_style.border_color = effect_color * 0.8
 	else:
-		card_style.bg_color = Color(0.08, 0.08, 0.1, 0.85)
-		card_style.border_color = Color(0.25, 0.25, 0.3, 0.6)
+		card_style.bg_color = ThemeColors.BG_MAIN.lightened(0.02)
+		card_style.border_color = ThemeColors.STEEL_DARK
 	
 	card_style.border_width_left = 4
 	card_style.border_width_right = 1
@@ -153,10 +162,9 @@ func _create_upgrade_card(upgrade_id: String) -> PanelContainer:
 	card.add_child(main_hbox)
 	
 	if not is_maxed:
-		card.gui_input.connect(_on_card_input.bind(upgrade_id, can_afford))
-		if can_afford:
-			card.mouse_entered.connect(_on_card_hover.bind(card, true))
-			card.mouse_exited.connect(_on_card_hover.bind(card, false))
+		card.gui_input.connect(_on_card_input.bind(upgrade_id))
+		card.mouse_entered.connect(_on_card_hover.bind(card, upgrade_id, true))
+		card.mouse_exited.connect(_on_card_hover.bind(card, upgrade_id, false))
 	
 	return card
 
@@ -238,13 +246,22 @@ func _create_content_vbox(data: Dictionary, upgrade_id: String, level: int, cost
 		var cost_label = Label.new()
 		cost_label.text = "Cost: %s" % GameState.format_number(cost)
 		cost_label.add_theme_font_size_override("font_size", 12)
-		cost_label.add_theme_color_override("font_color", Color(1, 0.85, 0.3) if can_afford else Color(0.5, 0.4, 0.3))
+		cost_label.add_theme_color_override("font_color", ThemeColors.GOLD_TEXT if can_afford else ThemeColors.STEEL_DARK)
 		cost_hbox.add_child(cost_label)
 		
 		# Next effect preview
 		var next_effect = upgrade_manager.get_effect(upgrade_id)
 		var next_label = Label.new()
-		next_label.text = "Next: +%.1f" % next_effect
+		
+		if effect_type == "multiplier":
+			# Show effective multiplier after diminishing returns
+			var effective_mult = upgrade_manager.get_preview_multiplier(upgrade_id)
+			next_label.text = "Effective: x%.2f" % effective_mult
+			if game_state.total_multipliers_purchased > 0:
+				next_label.text += " (reduced)"
+		else:
+			next_label.text = "Next: +%.1f" % next_effect
+		
 		next_label.add_theme_font_size_override("font_size", 11)
 		next_label.add_theme_color_override("font_color", effect_color * 0.7)
 		cost_hbox.add_child(next_label)
@@ -262,16 +279,19 @@ func _create_content_vbox(data: Dictionary, upgrade_id: String, level: int, cost
 	return content_vbox
 
 
-func _on_card_input(event: InputEvent, upgrade_id: String, can_afford: bool) -> void:
+func _on_card_input(event: InputEvent, upgrade_id: String) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if can_afford:
+		var cost = upgrade_manager.get_cost(upgrade_id)
+		if game_state.gold >= cost:
 			if upgrade_manager.purchase(upgrade_id):
 				upgrade_purchased.emit(upgrade_id)
 				refresh()
 
 
-func _on_card_hover(card: PanelContainer, hovering: bool) -> void:
-	if hovering:
+func _on_card_hover(card: PanelContainer, upgrade_id: String, hovering: bool) -> void:
+	var cost = upgrade_manager.get_cost(upgrade_id)
+	var can_afford = game_state.gold >= cost
+	if hovering and can_afford:
 		card.modulate = Color(1.1, 1.1, 1.1)
 	else:
 		card.modulate = Color.WHITE
