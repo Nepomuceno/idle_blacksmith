@@ -23,6 +23,7 @@ func save() -> void:
 		"lifetime_gold": game_state.lifetime_gold,
 		"ancient_souls": game_state.ancient_souls,
 		"total_ascensions": game_state.total_ascensions,
+		"last_ascension_souls": game_state.last_ascension_souls,
 		"forge_level": game_state.forge_level,
 		"click_power": game_state.click_power,
 		"passive_income": game_state.passive_income,
@@ -79,6 +80,7 @@ func load_game() -> bool:
 	game_state.lifetime_gold = data.get("lifetime_gold", 0.0)
 	game_state.ancient_souls = data.get("ancient_souls", 0)
 	game_state.total_ascensions = data.get("total_ascensions", 0)
+	game_state.last_ascension_souls = data.get("last_ascension_souls", 0)
 	game_state.forge_level = data.get("forge_level", 1)
 	game_state.click_power = data.get("click_power", 1.0)
 	game_state.passive_income = data.get("passive_income", 0.0)

@@ -14,6 +14,7 @@ var lifetime_gold: float = 0.0
 # Ascension System
 var ancient_souls: int = 0
 var total_ascensions: int = 0
+var last_ascension_souls: int = 0  # Souls earned on last ascension
 
 # Forge stats
 var forge_level: int = 1

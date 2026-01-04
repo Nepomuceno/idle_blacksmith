@@ -41,6 +41,7 @@ func ascend() -> int:
 	var souls_earned = get_souls_on_ascension()
 	game_state.ancient_souls += souls_earned
 	game_state.total_ascensions += 1
+	game_state.last_ascension_souls = souls_earned  # Track for auto-ascend threshold
 	game_state.lifetime_gold += game_state.total_gold_earned
 	
 	# Reset progress
@@ -130,10 +131,15 @@ func should_auto_ascend() -> bool:
 	if not can_ascend():
 		return false
 	
-	# Check if we've earned enough souls relative to threshold
+	# Check if we've earned enough souls relative to last ascension
 	var potential_souls = get_souls_on_ascension()
-	var min_souls = int(sqrt(THRESHOLD / 10000.0))  # Minimum souls at threshold
-	var target_souls = int(min_souls * game_state.auto_ascend_threshold)
+	var last_souls = game_state.last_ascension_souls
+	
+	# If no previous ascension, use minimum threshold
+	if last_souls <= 0:
+		last_souls = int(sqrt(THRESHOLD / 10000.0))
+	
+	var target_souls = int(last_souls * game_state.auto_ascend_threshold)
 	
 	return potential_souls >= target_souls
 

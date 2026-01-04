@@ -234,8 +234,16 @@ func _create_auto_ascend_settings() -> void:
 	var threshold_hbox = HBoxContainer.new()
 	threshold_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	
+	var last_souls = game_state.last_ascension_souls
+	var threshold_text = ""
+	if last_souls > 0:
+		var target = int(last_souls * game_state.auto_ascend_threshold)
+		threshold_text = "Threshold: %.1fx last (%d souls)" % [game_state.auto_ascend_threshold, target]
+	else:
+		threshold_text = "Threshold: %.1fx last ascension" % game_state.auto_ascend_threshold
+	
 	var threshold_label = Label.new()
-	threshold_label.text = "Threshold: %.1fx min souls" % game_state.auto_ascend_threshold
+	threshold_label.text = threshold_text
 	threshold_label.add_theme_font_size_override("font_size", 12)
 	threshold_label.add_theme_color_override("font_color", ThemeColors.STEEL_LIGHT)
 	threshold_label.name = "ThresholdLabel"
@@ -265,4 +273,9 @@ func _on_auto_ascend_toggled(enabled: bool) -> void:
 
 func _on_auto_ascend_threshold_changed(value: float, label: Label) -> void:
 	game_state.auto_ascend_threshold = value
-	label.text = "Threshold: %.1fx min souls" % value
+	var last_souls = game_state.last_ascension_souls
+	if last_souls > 0:
+		var target = int(last_souls * value)
+		label.text = "Threshold: %.1fx last (%d souls)" % [value, target]
+	else:
+		label.text = "Threshold: %.1fx last ascension" % value
