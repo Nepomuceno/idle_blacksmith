@@ -10,8 +10,8 @@ const THRESHOLD: float = 100000.0
 const WEAPON_UPGRADE_BASE_COST: int = 3
 const WEAPON_UPGRADE_COST_MULT: float = 1.5
 
-# Soul upgrade scaling - exponential to prevent trivial late-game
-const SOUL_UPGRADE_COST_MULT: float = 1.8
+# Soul upgrade scaling - moderate exponential to prevent trivial late-game
+const SOUL_UPGRADE_COST_MULT: float = 1.35
 
 
 func _init(state) -> void:
