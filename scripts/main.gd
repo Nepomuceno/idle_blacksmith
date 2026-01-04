@@ -337,6 +337,10 @@ func _do_auto_ascend() -> void:
 		forge_ui.create_weapon_grid()
 		ThemeColors.set_intensity_from_ascensions(game_state.total_ascensions)
 		_update_all_ui()
+		
+		# Do one forge click after auto-ascend to start the new cycle
+		var result = forge_manager.forge()
+		_spawn_floating_text("+%s" % GameStateClass.format_number(result["value"]), result["tier_color"])
 
 
 # ========== EVENT HANDLERS ==========
@@ -462,16 +466,19 @@ func _show_tab(tab_name: String) -> void:
 				upgrades_content_ref.visible = true
 			tab_upgrades_ref.modulate = ThemeColors.COLOR_PASSIVE
 			upgrades_ui.refresh()
+			_add_mobile_back_button(%UpgradesList)
 		"achieve":
 			if achieve_content_ref:
 				achieve_content_ref.visible = true
 			tab_achieve_ref.modulate = ThemeColors.GOLD_TEXT
 			achievements_ui.refresh()
+			_add_mobile_back_button(%AchieveList)
 		"shop":
 			if shop_content_ref:
 				shop_content_ref.visible = true
 			tab_shop_ref.modulate = ThemeColors.COLOR_SOULS
 			shop_ui.refresh()
+			_add_mobile_back_button(%ShopList)
 
 
 # ========== LAYOUT SYSTEM ==========
@@ -598,24 +605,31 @@ func _add_back_button_to_panel(panel: Control) -> void:
 	if existing:
 		return
 	
+	# Create a container that sits above the scroll area
+	var back_container = MarginContainer.new()
+	back_container.name = "WideBackButton"
+	back_container.add_theme_constant_override("margin_bottom", 8)
+	
 	var back_btn = Button.new()
-	back_btn.name = "WideBackButton"
 	back_btn.text = "< Back to Forge"
-	back_btn.custom_minimum_size = Vector2(150, 40)
-	back_btn.add_theme_font_size_override("font_size", 14)
+	back_btn.custom_minimum_size = Vector2(180, 45)
+	back_btn.add_theme_font_size_override("font_size", 16)
+	back_btn.add_theme_color_override("font_color", ThemeColors.ACCENT_SECONDARY)
 	back_btn.pressed.connect(func():
 		panel.visible = false
 		wide_layout_container.visible = true
 	)
+	back_container.add_child(back_btn)
 	
-	var container = panel.get_child(0)
+	# Insert at the top of the panel's layout, before the scroll area
+	var container = panel.get_child(0)  # This is the inner PanelContainer
 	if container:
-		var scroll = container.get_child(0)
+		var scroll = container.get_child(0)  # This is the ScrollContainer
 		if scroll:
-			var vbox = scroll.get_child(0)
+			var vbox = scroll.get_child(0)  # This is the VBox with content
 			if vbox:
-				vbox.add_child(back_btn)
-				vbox.move_child(back_btn, 0)
+				vbox.add_child(back_container)
+				vbox.move_child(back_container, 0)
 
 
 func _setup_mobile_layout() -> void:
@@ -637,6 +651,26 @@ func _setup_mobile_layout() -> void:
 	
 	if wide_nav_container:
 		wide_nav_container.visible = false
+
+
+func _add_mobile_back_button(list_container: VBoxContainer) -> void:
+	# Add a "Back to Forge" button at the top of each tab's content
+	var existing = list_container.find_child("MobileBackButton", false, false)
+	if existing:
+		return
+	
+	var back_btn = Button.new()
+	back_btn.name = "MobileBackButton"
+	back_btn.text = "< FORGE"
+	back_btn.custom_minimum_size = Vector2(0, 40)
+	back_btn.add_theme_font_size_override("font_size", 14)
+	back_btn.add_theme_color_override("font_color", ThemeColors.ACCENT_SECONDARY)
+	back_btn.pressed.connect(func():
+		_show_tab("forge")
+	)
+	
+	list_container.add_child(back_btn)
+	list_container.move_child(back_btn, 0)
 
 
 # ========== UI UPDATES ==========
