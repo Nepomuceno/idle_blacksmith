@@ -47,6 +47,37 @@ func _check_ascension_achievements() -> void:
 	_try_unlock("first_ascend", game_state.total_ascensions >= 1)
 	_try_unlock("ascend_5", game_state.total_ascensions >= 5)
 	_try_unlock("ascend_10", game_state.total_ascensions >= 10)
+	_try_unlock("ascend_25", game_state.total_ascensions >= 25)
+	_try_unlock("ascend_50", game_state.total_ascensions >= 50)
+	_try_unlock("ascend_100", game_state.total_ascensions >= 100)
+	
+	# Soul achievements (current souls, not spent)
+	var total_souls_ever = game_state.ancient_souls + _get_total_souls_spent()
+	_try_unlock("souls_10", total_souls_ever >= 10)
+	_try_unlock("souls_100", total_souls_ever >= 100)
+	_try_unlock("souls_1000", total_souls_ever >= 1000)
+	_try_unlock("souls_10000", total_souls_ever >= 10000)
+	
+	# Automation achievements
+	_try_unlock("unlock_auto_buy", game_state.ascension_upgrades.get("auto_buy", 0) >= 1)
+	_try_unlock("unlock_auto_ascend", game_state.ascension_upgrades.get("auto_ascend", 0) >= 1)
+	
+	# Ultimate achievement
+	_try_unlock("game_complete", game_state.game_completed)
+
+
+func _get_total_souls_spent() -> int:
+	# Estimate total souls spent based on upgrade levels
+	# This is approximate but good enough for achievements
+	var spent = 0
+	for upgrade_id in game_state.ascension_upgrades:
+		var level = game_state.ascension_upgrades[upgrade_id]
+		# Sum of geometric series approximation
+		spent += level * 5  # Rough estimate
+	for weapon_id in game_state.weapon_upgrade_levels:
+		var level = game_state.weapon_upgrade_levels[weapon_id]
+		spent += level * 5
+	return spent
 
 
 func check_weapon_unlocks(forge_manager) -> void:

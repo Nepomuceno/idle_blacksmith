@@ -37,6 +37,10 @@ func save() -> void:
 		"discovered_upgrades": game_state.discovered_upgrades,
 		"ascension_upgrades": game_state.ascension_upgrades,
 		"total_multipliers_purchased": game_state.total_multipliers_purchased,
+		"auto_buy_enabled": game_state.auto_buy_enabled,
+		"auto_ascend_enabled": game_state.auto_ascend_enabled,
+		"auto_ascend_threshold": game_state.auto_ascend_threshold,
+		"game_completed": game_state.game_completed,
 		"unlocked_achievements": game_state.unlocked_achievements,
 		"pending_achievement_rewards": game_state.pending_achievement_rewards,
 		"last_save_timestamp": game_state.last_save_timestamp
@@ -107,6 +111,10 @@ func load_game() -> bool:
 			game_state.ascension_upgrades[key] = data["ascension_upgrades"][key]
 	
 	game_state.total_multipliers_purchased = data.get("total_multipliers_purchased", 0)
+	game_state.auto_buy_enabled = data.get("auto_buy_enabled", false)
+	game_state.auto_ascend_enabled = data.get("auto_ascend_enabled", false)
+	game_state.auto_ascend_threshold = data.get("auto_ascend_threshold", 2.0)
+	game_state.game_completed = data.get("game_completed", false)
 	
 	if data.has("discovered_upgrades"):
 		game_state.discovered_upgrades = data["discovered_upgrades"]

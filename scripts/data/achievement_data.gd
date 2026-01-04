@@ -27,6 +27,22 @@ const ACHIEVEMENTS: Dictionary = {
 	"first_ascend": {"name": "Transcendence", "desc": "Ascend for the first time", "icon": "S_Light01.png", "reward": 0},
 	"ascend_5": {"name": "Eternal Smith", "desc": "Ascend 5 times", "icon": "S_Light05.png", "reward": 0},
 	"ascend_10": {"name": "Immortal Forger", "desc": "Ascend 10 times", "icon": "S_Light10.png", "reward": 0},
+	"ascend_25": {"name": "Timeless Master", "desc": "Ascend 25 times", "icon": "S_Holy01.png", "reward": 0},
+	"ascend_50": {"name": "Cosmic Smith", "desc": "Ascend 50 times", "icon": "S_Holy02.png", "reward": 0},
+	"ascend_100": {"name": "Eternal Legend", "desc": "Ascend 100 times", "icon": "S_Light02.png", "reward": 0},
+	
+	# Soul milestones
+	"souls_10": {"name": "Soul Collector", "desc": "Accumulate 10 Ancient Souls", "icon": "S_Dark01.png", "reward": 0},
+	"souls_100": {"name": "Soul Hoarder", "desc": "Accumulate 100 Ancient Souls", "icon": "S_Dark02.png", "reward": 0},
+	"souls_1000": {"name": "Soul Master", "desc": "Accumulate 1,000 Ancient Souls", "icon": "S_Dark03.png", "reward": 0},
+	"souls_10000": {"name": "Soul Emperor", "desc": "Accumulate 10,000 Ancient Souls", "icon": "S_Dark04.png", "reward": 0},
+	
+	# Automation achievements
+	"unlock_auto_buy": {"name": "Hands Free", "desc": "Unlock Auto-Buy", "icon": "E_Metal02.png", "reward": 0},
+	"unlock_auto_ascend": {"name": "Infinite Loop", "desc": "Unlock Auto-Ascend", "icon": "I_Clock.png", "reward": 0},
+	
+	# Ultimate
+	"game_complete": {"name": "Cosmic Mastery", "desc": "Complete the game", "icon": "S_Light02.png", "reward": 0},
 	
 	# Weapon unlocks
 	"unlock_dagger": {"name": "Swift Blade", "desc": "Unlock the Dagger", "icon": "W_Dagger010.png", "reward": 0},

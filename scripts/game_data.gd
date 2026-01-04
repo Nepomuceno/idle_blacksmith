@@ -401,7 +401,10 @@ const ASCENSION_UPGRADE_DATA: Dictionary = {
 	"soul_power": {"name": "Soul Power", "desc": "+10% Click Power", "base_cost": 5},
 	"soul_income": {"name": "Soul Income", "desc": "+10% Passive Income", "base_cost": 5},
 	"soul_luck": {"name": "Soul Luck", "desc": "+5% Better Items", "base_cost": 10},
-	"soul_forge": {"name": "Soul Forge", "desc": "+10% Auto-Forge Speed", "base_cost": 8}
+	"soul_forge": {"name": "Soul Forge", "desc": "+10% Auto-Forge Speed", "base_cost": 8},
+	"auto_buy": {"name": "Automated Purchasing", "desc": "Auto-buy affordable upgrades", "base_cost": 100, "max_level": 1, "unlock_ascensions": 5},
+	"auto_ascend": {"name": "Eternal Cycle", "desc": "Auto-ascend when ready", "base_cost": 250, "max_level": 1, "unlock_ascensions": 10},
+	"cosmic_mastery": {"name": "Cosmic Mastery", "desc": "THE ULTIMATE POWER", "base_cost": 10000, "max_level": 1, "unlock_ascensions": 25, "is_ultimate": true}
 }
 
 # Weapon upgrade costs (souls) - increases per level

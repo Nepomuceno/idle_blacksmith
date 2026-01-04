@@ -32,6 +32,7 @@ signal layout_changed(is_wide: bool)
 signal game_saved()
 signal game_loaded()
 signal game_reset()
+signal game_completed()
 
 # Audio events
 signal play_sound(sound_type: String)

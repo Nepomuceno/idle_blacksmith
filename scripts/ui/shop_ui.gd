@@ -95,22 +95,53 @@ func _add_section_header(text: String, color: Color) -> void:
 
 
 func _create_soul_upgrades() -> void:
-	for upgrade_id in UpgradeData.get_soul_upgrade_ids():
+	var visible_upgrades = ascension_manager.get_visible_soul_upgrades()
+	
+	for upgrade_id in visible_upgrades:
 		var data = UpgradeData.get_soul_upgrade(upgrade_id)
 		var level = game_state.ascension_upgrades.get(upgrade_id, 0)
+		var is_unlocked = ascension_manager.is_soul_upgrade_unlocked(upgrade_id)
+		var is_maxed = ascension_manager.is_soul_upgrade_maxed(upgrade_id)
 		var cost = ascension_manager.get_soul_upgrade_cost(upgrade_id)
 		var can_afford = ascension_manager.can_afford_soul_upgrade(upgrade_id)
+		var required_ascensions = data.get("unlock_ascensions", 0)
+		var is_ultimate = data.get("is_ultimate", false)
 		
 		var btn = Button.new()
 		btn.name = "soul_" + upgrade_id
 		btn.custom_minimum_size = Vector2(0, 70)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.text = "%s (Lv %d)\n%s\nCost: %d souls" % [data.get("name", ""), level, data.get("desc", ""), cost]
+		
+		if is_maxed:
+			btn.text = "%s - OWNED\n%s" % [data.get("name", ""), data.get("desc", "")]
+			btn.disabled = true
+			btn.modulate = Color(0.5, 1.0, 0.5)
+		elif not is_unlocked:
+			btn.text = "%s - LOCKED\n%s\nRequires %d Ascensions" % [data.get("name", ""), data.get("desc", ""), required_ascensions]
+			btn.disabled = true
+			btn.modulate = Color(0.4, 0.4, 0.4)
+		else:
+			btn.text = "%s (Lv %d)\n%s\nCost: %d souls" % [data.get("name", ""), level, data.get("desc", ""), cost]
+			btn.disabled = not can_afford
+			btn.modulate = Color(1, 1, 1) if can_afford else Color(0.5, 0.5, 0.5)
+		
+		# Special styling for ultimate upgrade
+		if is_ultimate:
+			btn.add_theme_color_override("font_color", ThemeColors.GOLD_TEXT)
+		
 		btn.add_theme_font_size_override("font_size", 14)
-		btn.disabled = not can_afford
-		btn.modulate = Color(1, 1, 1) if can_afford else Color(0.5, 0.5, 0.5)
 		btn.pressed.connect(_on_soul_upgrade_pressed.bind(upgrade_id))
 		shop_list.add_child(btn)
+	
+	# Add automation toggle if auto-buy is unlocked
+	if game_state.ascension_upgrades.get("auto_buy", 0) >= 1:
+		_add_spacer(10)
+		_create_auto_buy_toggle()
+	
+	# Add auto-ascend settings if unlocked
+	if game_state.ascension_upgrades.get("auto_ascend", 0) >= 1:
+		_add_spacer(10)
+		_create_auto_ascend_settings()
 
 
 func _create_weapon_upgrades() -> void:
@@ -158,3 +189,80 @@ func _on_weapon_upgrade_pressed(weapon_id: String) -> void:
 
 func _on_reset_pressed() -> void:
 	reset_requested.emit()
+
+
+func _create_auto_buy_toggle() -> void:
+	var hbox = HBoxContainer.new()
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	
+	var label = Label.new()
+	label.text = "Auto-Buy Upgrades: "
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", ThemeColors.STEEL_LIGHT)
+	hbox.add_child(label)
+	
+	var toggle = CheckButton.new()
+	toggle.button_pressed = game_state.auto_buy_enabled
+	toggle.toggled.connect(_on_auto_buy_toggled)
+	hbox.add_child(toggle)
+	
+	shop_list.add_child(hbox)
+
+
+func _create_auto_ascend_settings() -> void:
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	
+	# Toggle
+	var hbox = HBoxContainer.new()
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	
+	var label = Label.new()
+	label.text = "Auto-Ascend: "
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", ThemeColors.STEEL_LIGHT)
+	hbox.add_child(label)
+	
+	var toggle = CheckButton.new()
+	toggle.button_pressed = game_state.auto_ascend_enabled
+	toggle.toggled.connect(_on_auto_ascend_toggled)
+	hbox.add_child(toggle)
+	
+	vbox.add_child(hbox)
+	
+	# Threshold slider
+	var threshold_hbox = HBoxContainer.new()
+	threshold_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	
+	var threshold_label = Label.new()
+	threshold_label.text = "Threshold: %.1fx min souls" % game_state.auto_ascend_threshold
+	threshold_label.add_theme_font_size_override("font_size", 12)
+	threshold_label.add_theme_color_override("font_color", ThemeColors.STEEL_LIGHT)
+	threshold_label.name = "ThresholdLabel"
+	threshold_hbox.add_child(threshold_label)
+	
+	vbox.add_child(threshold_hbox)
+	
+	var slider = HSlider.new()
+	slider.min_value = 1.0
+	slider.max_value = 10.0
+	slider.step = 0.5
+	slider.value = game_state.auto_ascend_threshold
+	slider.custom_minimum_size = Vector2(200, 20)
+	slider.value_changed.connect(_on_auto_ascend_threshold_changed.bind(threshold_label))
+	vbox.add_child(slider)
+	
+	shop_list.add_child(vbox)
+
+
+func _on_auto_buy_toggled(enabled: bool) -> void:
+	game_state.auto_buy_enabled = enabled
+
+
+func _on_auto_ascend_toggled(enabled: bool) -> void:
+	game_state.auto_ascend_enabled = enabled
+
+
+func _on_auto_ascend_threshold_changed(value: float, label: Label) -> void:
+	game_state.auto_ascend_threshold = value
+	label.text = "Threshold: %.1fx min souls" % value

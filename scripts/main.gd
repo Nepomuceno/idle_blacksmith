@@ -76,9 +76,11 @@ var ascend_sound: AudioStreamPlayer
 var passive_timer: float = 0.0
 var autosave_timer: float = 0.0
 var auto_forge_timer: float = 0.0
+var auto_buy_timer: float = 0.0
 var last_tier_effect_time: float = 0.0
 const PASSIVE_TICK: float = 1.0
 const AUTOSAVE_INTERVAL: float = 30.0
+const AUTO_BUY_INTERVAL: float = 0.5  # Check every 0.5 seconds
 const MIN_TIER_EFFECT_INTERVAL: float = 0.15  # Max ~6 effects per second
 
 
@@ -198,6 +200,7 @@ func _connect_signals() -> void:
 	GameEvents.gold_changed.connect(_on_gold_changed)
 	GameEvents.achievement_unlocked.connect(_on_achievement_unlocked)
 	GameEvents.ascended.connect(_on_ascended)
+	GameEvents.game_completed.connect(_on_game_completed)
 
 
 func _setup_audio() -> void:
@@ -289,6 +292,17 @@ func _process(delta: float) -> void:
 		autosave_timer = 0.0
 		save_manager.save()
 	
+	# Auto-buy upgrades
+	if game_state.auto_buy_enabled:
+		auto_buy_timer += delta
+		if auto_buy_timer >= AUTO_BUY_INTERVAL:
+			auto_buy_timer = 0.0
+			_do_auto_buy()
+	
+	# Auto-ascend
+	if ascension_manager.should_auto_ascend():
+		_do_auto_ascend()
+	
 	# Check achievements
 	achievement_manager.check_all()
 	
@@ -302,6 +316,27 @@ func _do_auto_forge() -> void:
 	# Small visual feedback for auto-forge (less prominent than manual)
 	if result["tier"] >= 2:
 		_spawn_tier_effect(result["tier"], result["tier_color"])
+
+
+func _do_auto_buy() -> void:
+	# Try to buy affordable upgrades (cheapest first)
+	var visible_upgrades = upgrade_manager.get_visible_upgrades()
+	for upgrade_id in visible_upgrades:
+		if upgrade_manager.can_afford(upgrade_id) and not upgrade_manager.is_maxed(upgrade_id):
+			if upgrade_manager.purchase(upgrade_id):
+				# Small visual feedback
+				_spawn_floating_text("AUTO", Color(0.5, 0.8, 1.0))
+				return  # Only buy one per tick to avoid lag
+
+
+func _do_auto_ascend() -> void:
+	var souls = ascension_manager.ascend()
+	if souls > 0:
+		# Quieter effect for auto-ascend
+		_spawn_floating_text("ASCENDED +%d" % souls, ThemeColors.COLOR_SOULS)
+		forge_ui.create_weapon_grid()
+		ThemeColors.set_intensity_from_ascensions(game_state.total_ascensions)
+		_update_all_ui()
 
 
 # ========== EVENT HANDLERS ==========
@@ -388,6 +423,11 @@ func _on_achievement_unlocked(achievement_id: String) -> void:
 
 func _on_ascended(_souls: int) -> void:
 	pass  # Handled by ascend_requested
+
+
+func _on_game_completed() -> void:
+	# Show the endgame credits screen
+	_show_credits_screen()
 
 
 # ========== TAB NAVIGATION ==========
@@ -945,3 +985,144 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 		save_manager.save()
 		get_tree().quit()
+
+
+# ========== ENDGAME CREDITS ==========
+
+func _show_credits_screen() -> void:
+	var overlay = ColorRect.new()
+	overlay.name = "CreditsOverlay"
+	overlay.color = Color(0, 0, 0, 0.0)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+	
+	# Fade in overlay
+	var fade_tween = create_tween()
+	fade_tween.tween_property(overlay, "color:a", 0.95, 1.5)
+	
+	# Main panel
+	var panel = PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(400, 500)
+	panel.pivot_offset = Vector2(200, 250)
+	panel.modulate.a = 0.0
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.05, 0.03, 0.08, 0.98)
+	style.border_color = Color(1, 0.8, 0.2, 1)
+	style.set_border_width_all(4)
+	style.set_corner_radius_all(20)
+	style.shadow_color = Color(1, 0.7, 0.2, 0.5)
+	style.shadow_size = 20
+	style.content_margin_left = 30
+	style.content_margin_right = 30
+	style.content_margin_top = 30
+	style.content_margin_bottom = 30
+	panel.add_theme_stylebox_override("panel", style)
+	
+	var scroll = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(340, 440)
+	
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 20)
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	
+	# Title
+	var title = Label.new()
+	title.text = "COSMIC MASTERY ACHIEVED"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD
+	vbox.add_child(title)
+	
+	# Subtitle
+	var subtitle = Label.new()
+	subtitle.text = "You have mastered the art of forging\nand transcended mortal limits."
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_font_size_override("font_size", 14)
+	subtitle.add_theme_color_override("font_color", Color(0.8, 0.7, 0.9))
+	vbox.add_child(subtitle)
+	
+	# Stats section
+	var stats_title = Label.new()
+	stats_title.text = "YOUR LEGACY"
+	stats_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stats_title.add_theme_font_size_override("font_size", 18)
+	stats_title.add_theme_color_override("font_color", ThemeColors.COLOR_SOULS)
+	vbox.add_child(stats_title)
+	
+	var stats_text = Label.new()
+	stats_text.text = """Total Ascensions: %d
+Ancient Souls Collected: %s
+Weapons Forged: %s
+Lifetime Gold: %s""" % [
+		game_state.total_ascensions,
+		GameStateClass.format_souls(game_state.ancient_souls),
+		GameStateClass.format_number(float(game_state.total_items_forged)),
+		GameStateClass.format_number(game_state.lifetime_gold + game_state.total_gold_earned)
+	]
+	stats_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stats_text.add_theme_font_size_override("font_size", 14)
+	stats_text.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+	vbox.add_child(stats_text)
+	
+	# Lore text
+	var lore = Label.new()
+	lore.text = """The cosmic forge burns eternal.
+From a simple anvil in Aethermoor,
+you have risen to shape reality itself.
+
+The gods themselves now seek your work.
+Stars are forged in your flames.
+Legends are but sparks from your hammer.
+
+Yet the forge never rests...
+There are always more weapons to create,
+more power to accumulate,
+more realities to shape."""
+	lore.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lore.add_theme_font_size_override("font_size", 12)
+	lore.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
+	lore.autowrap_mode = TextServer.AUTOWRAP_WORD
+	vbox.add_child(lore)
+	
+	# Credits
+	var credits_title = Label.new()
+	credits_title.text = "CREATED BY"
+	credits_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	credits_title.add_theme_font_size_override("font_size", 16)
+	credits_title.add_theme_color_override("font_color", Color(1, 0.9, 0.5))
+	vbox.add_child(credits_title)
+	
+	var credits = Label.new()
+	credits.text = "Gabriel Nepomuceno\n\nThank you for playing!"
+	credits.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	credits.add_theme_font_size_override("font_size", 14)
+	credits.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
+	vbox.add_child(credits)
+	
+	# Continue button
+	var continue_btn = Button.new()
+	continue_btn.text = "Continue Playing"
+	continue_btn.custom_minimum_size = Vector2(180, 50)
+	continue_btn.add_theme_font_size_override("font_size", 16)
+	continue_btn.pressed.connect(func():
+		var close_tween = create_tween()
+		close_tween.tween_property(overlay, "modulate:a", 0.0, 0.5)
+		close_tween.tween_callback(overlay.queue_free)
+	)
+	vbox.add_child(continue_btn)
+	
+	scroll.add_child(vbox)
+	panel.add_child(scroll)
+	overlay.add_child(panel)
+	panel.position = (get_viewport_rect().size - panel.custom_minimum_size) / 2
+	
+	# Animate panel appearing
+	await get_tree().create_timer(0.5).timeout
+	var panel_tween = create_tween()
+	panel_tween.tween_property(panel, "modulate:a", 1.0, 1.0)
+	panel_tween.parallel().tween_property(panel, "scale", Vector2(1.0, 1.0), 0.5).from(Vector2(0.8, 0.8)).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)

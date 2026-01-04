@@ -78,18 +78,77 @@ func get_soul_upgrade_cost(upgrade_id: String) -> int:
 
 
 func can_afford_soul_upgrade(upgrade_id: String) -> bool:
+	if is_soul_upgrade_maxed(upgrade_id):
+		return false
+	if not is_soul_upgrade_unlocked(upgrade_id):
+		return false
 	return game_state.ancient_souls >= get_soul_upgrade_cost(upgrade_id)
 
 
-func purchase_soul_upgrade(upgrade_id: String) -> bool:
-	var cost = get_soul_upgrade_cost(upgrade_id)
-	if game_state.ancient_souls < cost:
+func is_soul_upgrade_maxed(upgrade_id: String) -> bool:
+	var data = UpgradeData.get_soul_upgrade(upgrade_id)
+	var max_level = data.get("max_level", -1)
+	if max_level < 0:
 		return false
+	var level = game_state.ascension_upgrades.get(upgrade_id, 0)
+	return level >= max_level
+
+
+func is_soul_upgrade_unlocked(upgrade_id: String) -> bool:
+	var data = UpgradeData.get_soul_upgrade(upgrade_id)
+	var required_ascensions = data.get("unlock_ascensions", 0)
+	return game_state.total_ascensions >= required_ascensions
+
+
+func purchase_soul_upgrade(upgrade_id: String) -> bool:
+	if not can_afford_soul_upgrade(upgrade_id):
+		return false
+	
+	var data = UpgradeData.get_soul_upgrade(upgrade_id)
+	var cost = get_soul_upgrade_cost(upgrade_id)
 	
 	game_state.ancient_souls -= cost
 	game_state.ascension_upgrades[upgrade_id] = game_state.ascension_upgrades.get(upgrade_id, 0) + 1
+	
+	# Handle special upgrades
+	if upgrade_id == "auto_buy":
+		game_state.auto_buy_enabled = true
+	elif upgrade_id == "auto_ascend":
+		game_state.auto_ascend_enabled = true
+	elif upgrade_id == "cosmic_mastery":
+		game_state.game_completed = true
+		GameEvents.game_completed.emit()
+	
 	GameEvents.soul_upgrade_purchased.emit(upgrade_id)
 	return true
+
+
+## Check if auto-ascend should trigger
+func should_auto_ascend() -> bool:
+	if not game_state.auto_ascend_enabled:
+		return false
+	if not can_ascend():
+		return false
+	
+	# Check if we've earned enough souls relative to threshold
+	var potential_souls = get_souls_on_ascension()
+	var min_souls = int(sqrt(THRESHOLD / 10000.0))  # Minimum souls at threshold
+	var target_souls = int(min_souls * game_state.auto_ascend_threshold)
+	
+	return potential_souls >= target_souls
+
+
+## Get visible soul upgrades (respecting unlock requirements)
+func get_visible_soul_upgrades() -> Array:
+	var visible = []
+	for upgrade_id in UpgradeData.get_soul_upgrade_ids():
+		var data = UpgradeData.get_soul_upgrade(upgrade_id)
+		var required_ascensions = data.get("unlock_ascensions", 0)
+		
+		# Show if unlocked OR close to unlocking (within 2 ascensions)
+		if game_state.total_ascensions >= required_ascensions - 2:
+			visible.append(upgrade_id)
+	return visible
 
 
 # Soul Shop - Weapon Upgrades

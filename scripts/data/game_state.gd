@@ -60,6 +60,14 @@ var ascension_upgrades: Dictionary = {
 # Multiplier tracking for diminishing returns
 var total_multipliers_purchased: int = 0
 
+# Automation settings
+var auto_buy_enabled: bool = false
+var auto_ascend_enabled: bool = false
+var auto_ascend_threshold: float = 2.0  # Multiplier of minimum (e.g., 2.0 = ascend at 2x min souls)
+
+# Endgame
+var game_completed: bool = false
+
 # Achievements
 var unlocked_achievements: Array = []
 var pending_achievement_rewards: float = 0.0
@@ -132,6 +140,10 @@ func reset() -> void:
 		ascension_upgrades[key] = 0
 	
 	total_multipliers_purchased = 0
+	auto_buy_enabled = false
+	auto_ascend_enabled = false
+	auto_ascend_threshold = 2.0
+	# Note: game_completed is NOT reset - it's permanent
 	discovered_upgrades.clear()
 	unlocked_achievements.clear()
 
