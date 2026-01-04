@@ -343,10 +343,10 @@ const UPGRADES: Dictionary = {
 }
 
 const SOUL_UPGRADES: Dictionary = {
-	"soul_power": {"name": "Soul Power", "desc": "+10% Click Power", "base_cost": 1},
-	"soul_income": {"name": "Soul Income", "desc": "+10% Passive Income", "base_cost": 1},
-	"soul_luck": {"name": "Soul Luck", "desc": "+5% Better Items", "base_cost": 2},
-	"soul_forge": {"name": "Soul Forge", "desc": "+10% Auto-Forge Speed", "base_cost": 2}
+	"soul_power": {"name": "Soul Power", "desc": "+10% Click Power", "base_cost": 5},
+	"soul_income": {"name": "Soul Income", "desc": "+10% Passive Income", "base_cost": 5},
+	"soul_luck": {"name": "Soul Luck", "desc": "+5% Better Items", "base_cost": 10},
+	"soul_forge": {"name": "Soul Forge", "desc": "+10% Auto-Forge Speed", "base_cost": 8}
 }
 
 

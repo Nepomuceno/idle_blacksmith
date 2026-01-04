@@ -10,6 +10,9 @@ const THRESHOLD: float = 100000.0
 const WEAPON_UPGRADE_BASE_COST: int = 3
 const WEAPON_UPGRADE_COST_MULT: float = 1.5
 
+# Soul upgrade scaling - exponential to prevent trivial late-game
+const SOUL_UPGRADE_COST_MULT: float = 1.8
+
 
 func _init(state) -> void:
 	game_state = state
@@ -69,7 +72,9 @@ func ascend() -> int:
 func get_soul_upgrade_cost(upgrade_id: String) -> int:
 	var data = UpgradeData.get_soul_upgrade(upgrade_id)
 	var level = game_state.ascension_upgrades.get(upgrade_id, 0)
-	return data.get("base_cost", 1) * (level + 1)
+	var base_cost = data.get("base_cost", 1)
+	# Exponential scaling: base_cost * 1.8^level
+	return int(base_cost * pow(SOUL_UPGRADE_COST_MULT, level))
 
 
 func can_afford_soul_upgrade(upgrade_id: String) -> bool:
