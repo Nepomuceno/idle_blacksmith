@@ -558,7 +558,17 @@ func _setup_wide_layout() -> void:
 		wide_nav_container.alignment = BoxContainer.ALIGNMENT_END
 		wide_nav_container.add_theme_constant_override("separation", 8)
 		
+		var forge_btn = Button.new()
+		forge_btn.name = "WideForgeBtn"
+		forge_btn.text = "FORGE"
+		forge_btn.custom_minimum_size = Vector2(80, 35)
+		forge_btn.add_theme_font_size_override("font_size", 12)
+		forge_btn.add_theme_color_override("font_color", ThemeColors.ACCENT_SECONDARY)
+		forge_btn.pressed.connect(_on_wide_forge_pressed)
+		wide_nav_container.add_child(forge_btn)
+		
 		var achieve_btn = Button.new()
+		achieve_btn.name = "WideAchieveBtn"
 		achieve_btn.text = "ACHIEVEMENTS"
 		achieve_btn.custom_minimum_size = Vector2(120, 35)
 		achieve_btn.add_theme_font_size_override("font_size", 12)
@@ -566,6 +576,7 @@ func _setup_wide_layout() -> void:
 		wide_nav_container.add_child(achieve_btn)
 		
 		var shop_btn = Button.new()
+		shop_btn.name = "WideShopBtn"
 		shop_btn.text = "SHOP"
 		shop_btn.custom_minimum_size = Vector2(80, 35)
 		shop_btn.add_theme_font_size_override("font_size", 12)
@@ -578,6 +589,16 @@ func _setup_wide_layout() -> void:
 	wide_nav_container.visible = true
 	
 	upgrades_ui.refresh()
+	_update_wide_nav_highlight("forge")
+
+
+func _on_wide_forge_pressed() -> void:
+	if upgrade_sound.stream:
+		upgrade_sound.play()
+	wide_layout_container.visible = true
+	achieve_content_ref.visible = false
+	shop_content_ref.visible = false
+	_update_wide_nav_highlight("forge")
 
 
 func _on_wide_achieve_pressed() -> void:
@@ -587,7 +608,7 @@ func _on_wide_achieve_pressed() -> void:
 	achieve_content_ref.visible = true
 	shop_content_ref.visible = false
 	achievements_ui.refresh()
-	_add_back_button_to_panel(achieve_content_ref)
+	_update_wide_nav_highlight("achieve")
 
 
 func _on_wide_shop_pressed() -> void:
@@ -597,39 +618,24 @@ func _on_wide_shop_pressed() -> void:
 	achieve_content_ref.visible = false
 	shop_content_ref.visible = true
 	shop_ui.refresh()
-	_add_back_button_to_panel(shop_content_ref)
+	_update_wide_nav_highlight("shop")
 
 
-func _add_back_button_to_panel(panel: Control) -> void:
-	var existing = panel.find_child("WideBackButton", false, false)
-	if existing:
+func _update_wide_nav_highlight(active: String) -> void:
+	if wide_nav_container == null:
 		return
 	
-	# Create a container that sits above the scroll area
-	var back_container = MarginContainer.new()
-	back_container.name = "WideBackButton"
-	back_container.add_theme_constant_override("margin_bottom", 8)
+	var forge_btn = wide_nav_container.find_child("WideForgeBtn", false, false)
+	var achieve_btn = wide_nav_container.find_child("WideAchieveBtn", false, false)
+	var shop_btn = wide_nav_container.find_child("WideShopBtn", false, false)
 	
-	var back_btn = Button.new()
-	back_btn.text = "< Back to Forge"
-	back_btn.custom_minimum_size = Vector2(180, 45)
-	back_btn.add_theme_font_size_override("font_size", 16)
-	back_btn.add_theme_color_override("font_color", ThemeColors.ACCENT_SECONDARY)
-	back_btn.pressed.connect(func():
-		panel.visible = false
-		wide_layout_container.visible = true
-	)
-	back_container.add_child(back_btn)
-	
-	# Insert at the top of the panel's layout, before the scroll area
-	var container = panel.get_child(0)  # This is the inner PanelContainer
-	if container:
-		var scroll = container.get_child(0)  # This is the ScrollContainer
-		if scroll:
-			var vbox = scroll.get_child(0)  # This is the VBox with content
-			if vbox:
-				vbox.add_child(back_container)
-				vbox.move_child(back_container, 0)
+	# Reset all to default
+	if forge_btn:
+		forge_btn.modulate = Color(0.7, 0.7, 0.7) if active != "forge" else Color(1, 1, 1)
+	if achieve_btn:
+		achieve_btn.modulate = Color(0.7, 0.7, 0.7) if active != "achieve" else Color(1, 1, 1)
+	if shop_btn:
+		shop_btn.modulate = Color(0.7, 0.7, 0.7) if active != "shop" else Color(1, 1, 1)
 
 
 func _setup_mobile_layout() -> void:
