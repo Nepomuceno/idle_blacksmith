@@ -68,8 +68,8 @@ func create_weapon_grid() -> void:
 	
 	weapon_buttons.clear()
 	var button_group = ButtonGroup.new()
-	var btn_size = Vector2(85, 85)
-	var icon_size = Vector2(48, 48)
+	var btn_size = Vector2(65, 70)
+	var icon_size = Vector2(40, 40)
 	
 	var unlocked_weapons = forge_manager.get_unlocked_weapons()
 	
@@ -102,7 +102,7 @@ func _create_weapon_button(weapon_id: String, weapon: Dictionary, is_unlocked: b
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_theme_constant_override("separation", 4)
+	vbox.add_theme_constant_override("separation", 2)
 	
 	var icon_panel = _create_icon_panel(weapon, is_unlocked, icon_size)
 	vbox.add_child(icon_panel)
@@ -116,7 +116,7 @@ func _create_weapon_button(weapon_id: String, weapon: Dictionary, is_unlocked: b
 		name_label.text = "Asc %d" % required
 		name_label.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4))
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.add_theme_font_size_override("font_size", 12)
+	name_label.add_theme_font_size_override("font_size", 10)
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(name_label)
 	
@@ -156,7 +156,7 @@ func _create_icon_panel(weapon: Dictionary, is_unlocked: bool, icon_size: Vector
 		letter.text = weapon.get("symbol", "?") if is_unlocked else "?"
 		letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		letter.add_theme_font_size_override("font_size", 28)
+		letter.add_theme_font_size_override("font_size", 22)
 		letter.add_theme_color_override("font_color", color if is_unlocked else Color(0.3, 0.3, 0.3))
 		letter.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		icon_panel.add_child(letter)
