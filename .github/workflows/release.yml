@@ -1,0 +1,227 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  GODOT_VERSION: "4.5.1"
+  GAME_NAME: "IdleBlacksmith"
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          use-dotnet: false
+          include-templates: true
+
+      - name: Import project
+        run: |
+          godot --headless --import
+          godot --headless --import
+
+      - name: Create export directory
+        run: mkdir -p exports/windows
+
+      - name: Export game
+        run: godot --headless --export-release "Windows Desktop" exports/windows/${{ env.GAME_NAME }}.exe
+
+      - name: Create ZIP archive
+        run: |
+          cd exports/windows
+          zip -r ../../${{ env.GAME_NAME }}-Windows.zip .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.GAME_NAME }}-Windows
+          path: ${{ env.GAME_NAME }}-Windows.zip
+          retention-days: 1
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          use-dotnet: false
+          include-templates: true
+
+      - name: Import project
+        run: |
+          godot --headless --import
+          godot --headless --import
+
+      - name: Create export directory
+        run: mkdir -p exports/linux
+
+      - name: Export game
+        run: godot --headless --export-release "Linux" exports/linux/${{ env.GAME_NAME }}.x86_64
+
+      - name: Create ZIP archive
+        run: |
+          cd exports/linux
+          zip -r ../../${{ env.GAME_NAME }}-Linux.zip .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.GAME_NAME }}-Linux
+          path: ${{ env.GAME_NAME }}-Linux.zip
+          retention-days: 1
+
+  build-macos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          use-dotnet: false
+          include-templates: true
+
+      - name: Import project
+        run: |
+          godot --headless --import
+          godot --headless --import
+
+      - name: Create export directory
+        run: mkdir -p exports/macos
+
+      - name: Export game
+        run: godot --headless --export-release "macOS" exports/macos/${{ env.GAME_NAME }}.zip
+
+      - name: Move ZIP to root
+        run: mv exports/macos/${{ env.GAME_NAME }}.zip ${{ env.GAME_NAME }}-macOS.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.GAME_NAME }}-macOS
+          path: ${{ env.GAME_NAME }}-macOS.zip
+          retention-days: 1
+
+  release:
+    needs: [build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for changelog generation
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display downloaded files
+        run: ls -la artifacts/*/
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Get previous tag
+        id: get_previous_tag
+        run: |
+          # Get all tags sorted by version, find the one before current
+          CURRENT_TAG="${GITHUB_REF#refs/tags/}"
+          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -A1 "^${CURRENT_TAG}$" | tail -1)
+          if [ "$PREVIOUS_TAG" = "$CURRENT_TAG" ] || [ -z "$PREVIOUS_TAG" ]; then
+            # No previous tag, use first commit
+            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+          echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          CURRENT_TAG="${GITHUB_REF#refs/tags/}"
+          PREVIOUS_TAG="${{ steps.get_previous_tag.outputs.PREVIOUS_TAG }}"
+          
+          echo "Generating changelog from $PREVIOUS_TAG to $CURRENT_TAG"
+          
+          # Create changelog file
+          {
+            echo "## What's Changed"
+            echo ""
+            
+            # Features
+            FEATURES=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"%s" | grep -E "^feat(\(.+\))?:" | sed 's/^feat(\([^)]*\)): /- **\1**: /' | sed 's/^feat: /- /' || true)
+            if [ -n "$FEATURES" ]; then
+              echo "### Features"
+              echo "$FEATURES"
+              echo ""
+            fi
+            
+            # Fixes
+            FIXES=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"%s" | grep -E "^fix(\(.+\))?:" | sed 's/^fix(\([^)]*\)): /- **\1**: /' | sed 's/^fix: /- /' || true)
+            if [ -n "$FIXES" ]; then
+              echo "### Bug Fixes"
+              echo "$FIXES"
+              echo ""
+            fi
+            
+            # Other changes (docs, refactor, perf, etc.)
+            OTHERS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"%s" | grep -E "^(docs|refactor|perf|style|test|build|ci|chore)(\(.+\))?:" | sed 's/^\([a-z]*\)(\([^)]*\)): /- **\1(\2)**: /' | sed 's/^\([a-z]*\): /- **\1**: /' || true)
+            if [ -n "$OTHERS" ]; then
+              echo "### Other Changes"
+              echo "$OTHERS"
+              echo ""
+            fi
+            
+            # If no conventional commits found, list all commits
+            CONVENTIONAL_COUNT=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"%s" | grep -E "^(feat|fix|docs|refactor|perf|style|test|build|ci|chore)(\(.+\))?:" | wc -l || echo "0")
+            if [ "$CONVENTIONAL_COUNT" -eq 0 ]; then
+              echo "### Commits"
+              git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s" || true
+              echo ""
+            fi
+            
+            echo "---"
+            echo ""
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${CURRENT_TAG}"
+          } > CHANGELOG_BODY.md
+          
+          cat CHANGELOG_BODY.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Idle Blacksmith ${{ steps.get_version.outputs.VERSION }}"
+          body_path: CHANGELOG_BODY.md
+          draft: false
+          prerelease: ${{ contains(steps.get_version.outputs.VERSION, '-') }}
+          files: |
+            artifacts/${{ env.GAME_NAME }}-Windows/${{ env.GAME_NAME }}-Windows.zip
+            artifacts/${{ env.GAME_NAME }}-macOS/${{ env.GAME_NAME }}-macOS.zip
+            artifacts/${{ env.GAME_NAME }}-Linux/${{ env.GAME_NAME }}-Linux.zip
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
