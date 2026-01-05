@@ -398,20 +398,20 @@
         <section class="download-section">
             <h2>Download Now</h2>
             <div class="download-buttons">
-                <a href="https://github.com/Nepomuceno/first_game/releases/latest/download/IdleBlacksmith-Windows.zip" class="download-btn primary">
+                <a id="download-windows" href="https://github.com/Nepomuceno/first_game/releases" class="download-btn primary">
                     <span class="icon">&#128421;</span>
                     <span>Windows</span>
                 </a>
-                <a href="https://github.com/Nepomuceno/first_game/releases/latest/download/IdleBlacksmith-macOS.zip" class="download-btn primary">
+                <a id="download-macos" href="https://github.com/Nepomuceno/first_game/releases" class="download-btn primary">
                     <span class="icon">&#63743;</span>
                     <span>macOS</span>
                 </a>
-                <a href="https://github.com/Nepomuceno/first_game/releases/latest/download/IdleBlacksmith-Linux.zip" class="download-btn secondary">
+                <a id="download-linux" href="https://github.com/Nepomuceno/first_game/releases" class="download-btn secondary">
                     <span class="icon">&#128039;</span>
                     <span>Linux</span>
                 </a>
             </div>
-            <p class="platform-note"><span id="version-text">Version 1.0.0</span> | Requires 64-bit system</p>
+            <p class="platform-note"><span id="version-text">Loading...</span> | <span id="release-type"></span>Requires 64-bit system</p>
         </section>
 
         <!-- Features -->
@@ -516,16 +516,35 @@
             particlesContainer.appendChild(particle);
         }
 
-        // Fetch latest release version from GitHub API
-        fetch('https://api.github.com/repos/Nepomuceno/first_game/releases/latest')
+        // Fetch latest release version from GitHub API (including prereleases)
+        fetch('https://api.github.com/repos/Nepomuceno/first_game/releases')
             .then(response => response.json())
-            .then(data => {
-                if (data.tag_name) {
-                    document.getElementById('version-text').textContent = data.tag_name;
+            .then(releases => {
+                if (releases && releases.length > 0) {
+                    // Get the most recent release (first in the list)
+                    const release = releases[0];
+                    const version = release.tag_name;
+                    const isPrerelease = release.prerelease;
+                    
+                    // Update version text
+                    document.getElementById('version-text').textContent = version;
+                    
+                    // Show beta badge if prerelease
+                    if (isPrerelease) {
+                        document.getElementById('release-type').textContent = 'Beta | ';
+                        document.getElementById('release-type').style.color = '#ffc864';
+                    }
+                    
+                    // Update download links to point to this specific release
+                    const baseUrl = `https://github.com/Nepomuceno/first_game/releases/download/${version}`;
+                    document.getElementById('download-windows').href = `${baseUrl}/IdleBlacksmith-Windows.zip`;
+                    document.getElementById('download-macos').href = `${baseUrl}/IdleBlacksmith-macOS.zip`;
+                    document.getElementById('download-linux').href = `${baseUrl}/IdleBlacksmith-Linux.zip`;
                 }
             })
             .catch(() => {
-                // Keep default version text if fetch fails
+                // Fallback to releases page if fetch fails
+                document.getElementById('version-text').textContent = 'Latest';
             });
     </script>
 </body>
