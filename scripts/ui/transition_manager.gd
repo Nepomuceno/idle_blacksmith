@@ -6,6 +6,7 @@ extends RefCounted
 class_name TransitionManager
 
 const LoreDataClass = preload("res://scripts/data/lore_data.gd")
+const WeaponDataClass = preload("res://scripts/data/weapon_data.gd")
 
 ## Signals for transition events
 signal transition_started
@@ -159,14 +160,32 @@ static func show_milestone_celebration(parent: Control, milestone_key: String) -
 	show_lore_popup(parent, title, text, quote)
 
 
-## Show weapon unlock narrative
+## Show weapon unlock narrative with comparison to previous weapon
 static func show_weapon_unlock(parent: Control, weapon_id: String) -> void:
 	var lore = LoreDataClass.get_weapon_lore(weapon_id)
 	if lore.is_empty():
 		return
 	
-	var title = "New Weapon Unlocked"
+	var weapon = WeaponDataClass.get_weapon(weapon_id)
+	var weapon_name = weapon.get("name", weapon_id.capitalize())
+	var new_value = WeaponDataClass.get_base_value(weapon_id)
+	
+	# Find previous weapon for comparison
+	var weapon_ids = WeaponDataClass.get_weapon_ids()
+	var weapon_index = weapon_ids.find(weapon_id)
+	var prev_weapon_id = weapon_ids[weapon_index - 1] if weapon_index > 0 else ""
+	var prev_value = WeaponDataClass.get_base_value(prev_weapon_id) if prev_weapon_id != "" else 1.0
+	var prev_name = WeaponDataClass.get_weapon(prev_weapon_id).get("name", "Sword") if prev_weapon_id != "" else "Sword"
+	
+	var improvement = ((new_value / prev_value) - 1.0) * 100.0
+	
+	var title = weapon_name + " Unlocked!"
 	var text = lore.get("unlock_message", "A new weapon awaits your mastery.")
+	
+	# Add comparison info
+	var comparison = "\n\n+%.0f%% base value vs %s" % [improvement, prev_name]
+	text += comparison
+	
 	var quote = "\"" + lore.get("legend", "") + "\""
 	
 	_spawn_unlock_particles(parent)
