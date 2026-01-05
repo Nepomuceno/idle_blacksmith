@@ -411,7 +411,7 @@
                     <span>Linux</span>
                 </a>
             </div>
-            <p class="platform-note">Version 1.0.0 | Requires 64-bit system</p>
+            <p class="platform-note"><span id="version-text">Version 1.0.0</span> | Requires 64-bit system</p>
         </section>
 
         <!-- Features -->
@@ -515,6 +515,18 @@
             
             particlesContainer.appendChild(particle);
         }
+
+        // Fetch latest release version from GitHub API
+        fetch('https://api.github.com/repos/Nepomuceno/first_game/releases/latest')
+            .then(response => response.json())
+            .then(data => {
+                if (data.tag_name) {
+                    document.getElementById('version-text').textContent = data.tag_name;
+                }
+            })
+            .catch(() => {
+                // Keep default version text if fetch fails
+            });
     </script>
 </body>
 </html>
