@@ -9,6 +9,7 @@
     <meta property="og:title" content="Idle Blacksmith - Forge Your Legend">
     <meta property="og:description" content="A fantasy idle game where you forge legendary weapons, collect gold, and ascend to gain permanent bonuses.">
     <meta property="og:type" content="website">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
@@ -398,15 +399,15 @@
         <section class="download-section">
             <h2>Download Now</h2>
             <div class="download-buttons">
-                <a id="download-windows" href="https://github.com/Nepomuceno/first_game/releases" class="download-btn primary">
+                <a id="download-windows" href="https://github.com/Nepomuceno/idle_blacksmith/releases" class="download-btn primary">
                     <span class="icon">&#128421;</span>
                     <span>Windows</span>
                 </a>
-                <a id="download-macos" href="https://github.com/Nepomuceno/first_game/releases" class="download-btn primary">
+                <a id="download-macos" href="https://github.com/Nepomuceno/idle_blacksmith/releases" class="download-btn primary">
                     <span class="icon">&#63743;</span>
                     <span>macOS</span>
                 </a>
-                <a id="download-linux" href="https://github.com/Nepomuceno/first_game/releases" class="download-btn secondary">
+                <a id="download-linux" href="https://github.com/Nepomuceno/idle_blacksmith/releases" class="download-btn secondary">
                     <span class="icon">&#128039;</span>
                     <span>Linux</span>
                 </a>
@@ -490,9 +491,9 @@
         <p>Created with &#10084; by Gabriel Nepomuceno</p>
         <p>Built with <a href="https://godotengine.org" target="_blank">Godot Engine</a></p>
         <div class="footer-links">
-            <a href="https://github.com/Nepomuceno/first_game">GitHub Repository</a>
-            <a href="https://github.com/Nepomuceno/first_game/releases">All Releases</a>
-            <a href="https://github.com/Nepomuceno/first_game/issues">Report Issues</a>
+            <a href="https://github.com/Nepomuceno/idle_blacksmith">GitHub Repository</a>
+            <a href="https://github.com/Nepomuceno/idle_blacksmith/releases">All Releases</a>
+            <a href="https://github.com/Nepomuceno/idle_blacksmith/issues">Report Issues</a>
         </div>
     </footer>
 
@@ -517,7 +518,7 @@
         }
 
         // Fetch latest release version from GitHub API (including prereleases)
-        fetch('https://api.github.com/repos/Nepomuceno/first_game/releases')
+        fetch('https://api.github.com/repos/Nepomuceno/idle_blacksmith/releases')
             .then(response => response.json())
             .then(releases => {
                 if (releases && releases.length > 0) {
@@ -536,7 +537,7 @@
                     }
                     
                     // Update download links to point to this specific release
-                    const baseUrl = `https://github.com/Nepomuceno/first_game/releases/download/${version}`;
+                    const baseUrl = `https://github.com/Nepomuceno/idle_blacksmith/releases/download/${version}`;
                     document.getElementById('download-windows').href = `${baseUrl}/IdleBlacksmith-Windows.zip`;
                     document.getElementById('download-macos').href = `${baseUrl}/IdleBlacksmith-macOS.zip`;
                     document.getElementById('download-linux').href = `${baseUrl}/IdleBlacksmith-Linux.zip`;
