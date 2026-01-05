@@ -81,6 +81,7 @@ var shown_milestones: Dictionary = {}
 
 # Settings
 var ui_scale: float = 1.0  # 0.8 to 1.5
+var sound_enabled: bool = true
 
 
 func _init() -> void:
@@ -155,6 +156,7 @@ func reset() -> void:
 	unlocked_achievements.clear()
 	shown_milestones.clear()
 	ui_scale = 1.0
+	sound_enabled = true
 
 
 # Utility functions for formatting

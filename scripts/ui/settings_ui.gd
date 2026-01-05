@@ -6,6 +6,7 @@ const GameState = preload("res://scripts/data/game_state.gd")
 
 signal reset_requested
 signal ui_scale_changed(new_scale: float)
+signal sound_toggled(enabled: bool)
 signal settings_reset
 
 var game_state
@@ -38,6 +39,12 @@ func refresh() -> void:
 	_create_ui_scale_slider()
 	_add_spacer(10)
 	_create_reset_settings_button()
+	
+	_add_spacer(20)
+	
+	# Audio section
+	_add_section_header("Audio", ThemeColors.ACCENT_SECONDARY)
+	_create_sound_toggle()
 	
 	_add_spacer(20)
 	
@@ -121,9 +128,37 @@ func _create_reset_settings_button() -> void:
 
 func _on_reset_settings_pressed() -> void:
 	game_state.ui_scale = 1.0
+	game_state.sound_enabled = true
 	ui_scale_changed.emit(1.0)
+	sound_toggled.emit(true)
 	settings_reset.emit()
 	refresh()
+
+
+func _create_sound_toggle() -> void:
+	var hbox = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 15)
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	
+	# Label
+	var label = Label.new()
+	label.text = "Sound Effects"
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", ThemeColors.STEEL_LIGHT)
+	hbox.add_child(label)
+	
+	# Toggle button
+	var toggle = CheckButton.new()
+	toggle.button_pressed = game_state.sound_enabled
+	toggle.toggled.connect(_on_sound_toggled)
+	hbox.add_child(toggle)
+	
+	settings_list.add_child(hbox)
+
+
+func _on_sound_toggled(enabled: bool) -> void:
+	game_state.sound_enabled = enabled
+	sound_toggled.emit(enabled)
 
 
 func _create_reset_button() -> void:

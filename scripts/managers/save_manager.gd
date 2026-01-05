@@ -46,7 +46,8 @@ func save() -> void:
 		"pending_achievement_rewards": game_state.pending_achievement_rewards,
 		"last_save_timestamp": game_state.last_save_timestamp,
 		"shown_milestones": game_state.shown_milestones,
-		"ui_scale": game_state.ui_scale
+		"ui_scale": game_state.ui_scale,
+		"sound_enabled": game_state.sound_enabled
 	}
 	
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -131,6 +132,7 @@ func load_game() -> bool:
 			game_state.shown_milestones[key] = data["shown_milestones"][key]
 	
 	game_state.ui_scale = data.get("ui_scale", 1.0)
+	game_state.sound_enabled = data.get("sound_enabled", true)
 	
 	GameEvents.game_loaded.emit()
 	return true

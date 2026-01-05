@@ -221,6 +221,7 @@ func _connect_signals() -> void:
 	# Settings UI signals
 	settings_ui.reset_requested.connect(_on_reset_requested)
 	settings_ui.ui_scale_changed.connect(_on_ui_scale_changed)
+	settings_ui.sound_toggled.connect(_on_sound_toggled)
 	
 	# GameEvents signals
 	GameEvents.gold_changed.connect(_on_gold_changed)
@@ -256,6 +257,15 @@ func _try_load_sounds() -> void:
 	if ResourceLoader.exists(sounds_path + "switch-b.ogg"):
 		ascend_sound.stream = load(sounds_path + "switch-b.ogg")
 		ascend_sound.volume_db = 0
+
+
+func _play_sound(sound: AudioStreamPlayer, pitch_variation: bool = false) -> void:
+	if not game_state.sound_enabled:
+		return
+	if sound.stream:
+		if pitch_variation:
+			sound.pitch_scale = randf_range(0.9, 1.1)
+		sound.play()
 
 
 func _setup_tab_buttons() -> void:
@@ -384,9 +394,7 @@ func _do_auto_ascend() -> void:
 func _on_forge_requested() -> void:
 	var result = forge_manager.forge()
 	
-	if forge_sound.stream:
-		forge_sound.pitch_scale = randf_range(0.9, 1.1)
-		forge_sound.play()
+	_play_sound(forge_sound, true)
 	
 	_spawn_floating_text("+%s" % GameStateClass.format_number(result["value"]), result["tier_color"])
 	forge_ui.show_forge_result(result)
@@ -406,8 +414,7 @@ func _on_weapon_selected(weapon_id: String) -> void:
 func _on_ascend_requested() -> void:
 	var souls = ascension_manager.ascend()
 	if souls > 0:
-		if ascend_sound.stream:
-			ascend_sound.play()
+		_play_sound(ascend_sound)
 		_show_ascension_effect(souls)
 		forge_ui.create_weapon_grid()
 		# Update theme intensity based on new ascension count
@@ -419,29 +426,25 @@ func _on_ascend_requested() -> void:
 
 
 func _on_upgrade_purchased(upgrade_id: String) -> void:
-	if upgrade_sound.stream:
-		upgrade_sound.play()
+	_play_sound(upgrade_sound)
 	_spawn_floating_text("UPGRADED!", Color(0.3, 1.0, 0.3))
 	_update_all_ui()
 
 
 func _on_rewards_claimed(amount: float) -> void:
 	_spawn_floating_text("+%s Gold!" % GameStateClass.format_number(amount), ThemeColors.GOLD_TEXT)
-	if upgrade_sound.stream:
-		upgrade_sound.play()
+	_play_sound(upgrade_sound)
 	_update_gold_display()
 
 
 func _on_soul_upgrade_purchased(_upgrade_id: String) -> void:
-	if ascend_sound.stream:
-		ascend_sound.play()
+	_play_sound(ascend_sound)
 	_spawn_floating_text("SOUL POWER!", Color(0.8, 0.5, 1))
 	_update_all_ui()
 
 
 func _on_weapon_upgrade_purchased(_weapon_id: String) -> void:
-	if ascend_sound.stream:
-		ascend_sound.play()
+	_play_sound(ascend_sound)
 	_spawn_floating_text("WEAPON UPGRADED!", Color(1, 0.8, 0.3))
 	_update_all_ui()
 
@@ -456,6 +459,11 @@ func _on_ui_scale_changed(new_scale: float) -> void:
 	save_manager.save()
 
 
+func _on_sound_toggled(_enabled: bool) -> void:
+	# Setting is already saved in game_state, just persist it
+	save_manager.save()
+
+
 func _on_gold_changed(_new_amount: float) -> void:
 	_update_gold_display()
 	# In wide layout, upgrades are always visible so refresh them
@@ -466,8 +474,7 @@ func _on_gold_changed(_new_amount: float) -> void:
 func _on_achievement_unlocked(achievement_id: String) -> void:
 	var data = AchievementDataClass.get_achievement(achievement_id)
 	_spawn_floating_text("Achievement: %s" % data.get("name", "???"), Color(1, 0.9, 0.3))
-	if ascend_sound.stream:
-		ascend_sound.play()
+	_play_sound(ascend_sound)
 
 
 func _on_ascended(_souls: int) -> void:
@@ -482,8 +489,7 @@ func _on_game_completed() -> void:
 # ========== TAB NAVIGATION ==========
 
 func _on_tab_pressed(tab_name: String) -> void:
-	if upgrade_sound.stream:
-		upgrade_sound.play()
+	_play_sound(upgrade_sound)
 	_show_tab(tab_name)
 
 
@@ -656,8 +662,7 @@ func _setup_wide_layout() -> void:
 
 
 func _on_wide_forge_pressed() -> void:
-	if upgrade_sound.stream:
-		upgrade_sound.play()
+	_play_sound(upgrade_sound)
 	wide_layout_container.visible = true
 	achieve_content_ref.visible = false
 	shop_content_ref.visible = false
@@ -666,8 +671,7 @@ func _on_wide_forge_pressed() -> void:
 
 
 func _on_wide_achieve_pressed() -> void:
-	if upgrade_sound.stream:
-		upgrade_sound.play()
+	_play_sound(upgrade_sound)
 	wide_layout_container.visible = false
 	achieve_content_ref.visible = true
 	shop_content_ref.visible = false
@@ -677,8 +681,7 @@ func _on_wide_achieve_pressed() -> void:
 
 
 func _on_wide_shop_pressed() -> void:
-	if upgrade_sound.stream:
-		upgrade_sound.play()
+	_play_sound(upgrade_sound)
 	wide_layout_container.visible = false
 	achieve_content_ref.visible = false
 	shop_content_ref.visible = true
@@ -688,8 +691,7 @@ func _on_wide_shop_pressed() -> void:
 
 
 func _on_wide_settings_pressed() -> void:
-	if upgrade_sound.stream:
-		upgrade_sound.play()
+	_play_sound(upgrade_sound)
 	wide_layout_container.visible = false
 	achieve_content_ref.visible = false
 	shop_content_ref.visible = false
@@ -1013,8 +1015,7 @@ func _show_offline_popup(gold_earned: float, seconds_away: float) -> void:
 	collect_btn.pressed.connect(func():
 		save_manager.apply_offline_progress(gold_earned)
 		_update_gold_display()
-		if ascend_sound.stream:
-			ascend_sound.play()
+		_play_sound(ascend_sound)
 		overlay.queue_free()
 	)
 	vbox.add_child(collect_btn)
