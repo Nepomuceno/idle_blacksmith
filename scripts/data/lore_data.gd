@@ -172,6 +172,145 @@ const LOADING_TIPS: Array[String] = [
 ]
 
 ## ============================================
+## WEAPON LORE - Backstories for each weapon type
+## ============================================
+
+const WEAPON_LORE := {
+	"sword": {
+		"name": "The Blade of Beginnings",
+		"origin": "The sword was the first weapon forged by Valdris himself, shaped from a fallen star.",
+		"legend": "Every great smith must master the sword before any other weapon. It is said that those who truly understand the blade can hear the whispers of Valdris in every strike.",
+		"unlock_message": "The ancient anvil recognizes you. The path of the sword is now open.",
+	},
+	"dagger": {
+		"name": "Shadow's Kiss",
+		"origin": "Born from the need for swift justice, daggers were first crafted by the Night Wardens of old Aethermoor.",
+		"legend": "A dagger forged with true skill can find its mark through any armor, guided by the spirits of those who wielded such blades before.",
+		"unlock_message": "Your first ascension has awakened the secrets of the dagger. The shadows welcome you.",
+	},
+	"axe": {
+		"name": "Thundercleave",
+		"origin": "The mountain clans brought the art of axe-craft to the Eternal Forge, their techniques forged in storms.",
+		"legend": "An axe splits more than wood and bone—it cleaves through the veil between worlds, channeling raw elemental fury.",
+		"unlock_message": "The mountain spirits acknowledge your dedication. The axe's power is yours to command.",
+	},
+	"bow": {
+		"name": "Whisperwind",
+		"origin": "Elven smiths from the Silverwood contributed their secrets, teaching mortals to forge weapons that bend light and air.",
+		"legend": "A master-forged bow never misses its true target, for the spirits guide every arrow to its destined mark.",
+		"unlock_message": "The wind carries tales of your skill. The art of the bow reveals itself to you.",
+	},
+	"spear": {
+		"name": "Dragonpiercer",
+		"origin": "The first spears were forged to slay the great wyrms that once terrorized Aethermoor.",
+		"legend": "They say a spear forged at the Eternal Forge can pierce the scales of any dragon, and reach the hearts of gods.",
+		"unlock_message": "You have proven your worth through many ascensions. The spear's legacy is now yours.",
+	},
+	"mace": {
+		"name": "Doomhammer",
+		"origin": "Temple guardians created the first maces, weapons blessed to shatter both bone and dark magic.",
+		"legend": "A mace forged with pure intent can break any curse, crush any evil, and protect the innocent from harm.",
+		"unlock_message": "The temple spirits bless your craft. The mace shall be your shield against darkness.",
+	},
+	"staff": {
+		"name": "The Eternal Conduit",
+		"origin": "The rarest of weapons, staves channel pure magical energy through specially treated metals and enchanted wood.",
+		"legend": "Only the greatest smiths can forge a true staff, for it requires binding a fragment of one's own soul into the creation.",
+		"unlock_message": "You have achieved mastery beyond measure. The staff, the ultimate test, awaits your hammer.",
+	},
+}
+
+## ============================================
+## MILESTONE NARRATIVES - Story beats for progression
+## ============================================
+
+const MILESTONE_NARRATIVES := {
+	"first_forge": {
+		"title": "The Journey Begins",
+		"text": "The hammer falls. The metal sings. Your first creation takes shape upon the ancient anvil. It is humble work, but every legend must have its beginning.",
+		"quote": "\"A single spark can ignite a thousand forges.\" - Master Thornwick",
+	},
+	"100_forged": {
+		"title": "The Apprentice Rises",
+		"text": "One hundred weapons bear your mark. The spirits of the forge have taken notice—your dedication does not go unseen in this realm.",
+		"quote": "\"Skill is forged through repetition, but mastery is forged through understanding.\" - The First Smith",
+	},
+	"first_rare": {
+		"title": "A Glimmer of Excellence",
+		"text": "From ordinary iron, something extraordinary emerges. This weapon shimmers with a quality that transcends mere craftsmanship.",
+		"quote": "\"The metal knows when it is in capable hands.\" - Ancient Proverb",
+	},
+	"first_epic": {
+		"title": "The Spirits Speak",
+		"text": "The ancient souls stir within the forge. Your creation pulses with otherworldly energy—a weapon touched by powers beyond the mortal realm.",
+		"quote": "\"When the spirits whisper, the wise smith listens.\" - Temple of the Forge",
+	},
+	"first_legendary": {
+		"title": "Legend Made Manifest",
+		"text": "This is no mere weapon. This is a legend given form, a story waiting to be written in the blood of your enemies. Heroes will quest for centuries to wield what you have created.",
+		"quote": "\"Some weapons are forged. Others are destined.\" - Valdris, the First Smith",
+	},
+	"first_ascension": {
+		"title": "The Rite of Rebirth",
+		"text": "The flames consume your worldly gains, but from the ashes, something greater emerges. You have touched the realm of spirits and returned transformed. The Ancient Souls now flow through your very being.",
+		"quote": "\"To ascend is not to leave behind, but to carry forward the essence of all that was.\" - The Eternal Codex",
+	},
+	"10_ascensions": {
+		"title": "Spirit Walker",
+		"text": "Ten times you have passed through the flames. The boundary between worlds grows thin around you. Other smiths speak your name in reverent whispers.",
+		"quote": "\"Those who walk between worlds see truths hidden from mortal eyes.\" - Spirit of the Forge",
+	},
+	"master_smith": {
+		"title": "Master of the Eternal Forge",
+		"text": "The forge recognizes you not as an apprentice, not as a journeyman, but as a true Master. The spirits bow to your skill. Kings send emissaries to beg for your creations. Legends are written about your works.",
+		"quote": "\"In ten thousand years, only a handful have achieved what you now possess.\" - The Ancient Ones",
+	},
+}
+
+## ============================================
+## ASCENSION MILESTONES
+## ============================================
+
+const ASCENSION_MILESTONES := {
+	1: {
+		"title": "First Steps Beyond",
+		"message": "You have crossed the threshold. The dagger, weapon of shadows, is now yours to forge.",
+	},
+	2: {
+		"title": "Path of Power",
+		"message": "The mountain spirits acknowledge you. The axe's fury awaits your command.",
+	},
+	3: {
+		"title": "Wind Walker",
+		"message": "The elven secrets are revealed. The bow shall sing in your hands.",
+	},
+	5: {
+		"title": "Dragon's Bane",
+		"message": "You have proven yourself against all odds. The spear's ancient power is unlocked.",
+	},
+	7: {
+		"title": "Temple Guardian",
+		"message": "The sacred protectors accept you. The mace shall be your instrument of justice.",
+	},
+	10: {
+		"title": "Arcane Master",
+		"message": "You have achieved what few dare dream. The staff, pinnacle of smithing, answers your call.",
+	},
+	25: {
+		"title": "Living Legend",
+		"message": "Your name echoes through the ages. Even the gods speak of your works.",
+	},
+	50: {
+		"title": "Eternal Smith",
+		"message": "You have transcended mortality. Your forge burns with the fire of creation itself.",
+	},
+	100: {
+		"title": "One With The Forge",
+		"message": "The Eternal Forge and you are one. Reality reshapes itself around your anvil.",
+	},
+}
+
+## ============================================
 ## NPC QUOTES (for future expansion)
 ## ============================================
 
@@ -180,18 +319,46 @@ const NPC_QUOTES := {
 		"Fine work! The nobles will pay handsomely for these.",
 		"I've never seen such craftsmanship outside the royal armory.",
 		"My customers ask for your work by name now.",
+		"The kingdom's finest warriors seek your blades.",
+		"Even the royal smith asks where you learned your craft.",
 	],
 	"spirit": [
 		"We remember the First Smith. You carry his spark.",
 		"The flames recognize your dedication.",
 		"Forge on, young master. Eternity watches.",
+		"Your soul burns brighter with each creation.",
+		"The ancient ones smile upon your work.",
 	],
 	"apprentice": [
 		"Master, how do you make it look so easy?",
 		"I hope to forge half as well as you someday.",
 		"The other apprentices speak of you with awe.",
+		"Will you teach me the secret of the eternal flames?",
+		"I saw the spirits dancing around your last creation!",
 	],
 }
+
+## ============================================
+## RANDOM LORE SNIPPETS (for loading screens, transitions)
+## ============================================
+
+const LORE_SNIPPETS: Array[String] = [
+	"The Eternal Forge has burned for ten thousand years, waiting for a worthy smith.",
+	"Valdris, the First Smith, forged the sun itself, or so the legends claim.",
+	"Ancient Souls are fragments of master smiths who chose to remain, guiding future generations.",
+	"The metal of Aethermoor remembers. Every weapon carries echoes of its creation.",
+	"Some say the hammer's ring can be heard across all realms when a legendary weapon is born.",
+	"The greatest weapons are not made—they are awakened from slumber within the metal.",
+	"In the old tongue, 'blacksmith' translates to 'shaper of destinies.'",
+	"The Eternal Forge exists in all times simultaneously. Past, present, and future are one at the anvil.",
+	"Weapons forged with true mastery develop consciousness over centuries.",
+	"The fire of the Eternal Forge burns without fuel, fed by ambition and dedication alone.",
+	"Master Thornwick was said to hear the metal speak, telling him its true form.",
+	"The spirits choose who may ascend. Wealth alone cannot buy their favor.",
+	"Each tier of quality represents a deeper connection to the spiritual realm.",
+	"The boundary between smith and weapon blurs with each ascension.",
+	"In Aethermoor, the finest blade is worth more than a kingdom.",
+]
 
 ## ============================================
 ## HELPER FUNCTIONS
@@ -214,4 +381,45 @@ static func get_tier_flavor(tier_key: String) -> String:
 static func get_tier_description(tier_key: String) -> String:
 	if TIER_LORE.has(tier_key):
 		return TIER_LORE[tier_key].get("description", "")
+	return ""
+
+
+static func get_weapon_lore(weapon_id: String) -> Dictionary:
+	if WEAPON_LORE.has(weapon_id):
+		return WEAPON_LORE[weapon_id]
+	return {}
+
+
+static func get_weapon_legend(weapon_id: String) -> String:
+	if WEAPON_LORE.has(weapon_id):
+		return WEAPON_LORE[weapon_id].get("legend", "")
+	return ""
+
+
+static func get_weapon_unlock_message(weapon_id: String) -> String:
+	if WEAPON_LORE.has(weapon_id):
+		return WEAPON_LORE[weapon_id].get("unlock_message", "")
+	return ""
+
+
+static func get_milestone_narrative(milestone_key: String) -> Dictionary:
+	if MILESTONE_NARRATIVES.has(milestone_key):
+		return MILESTONE_NARRATIVES[milestone_key]
+	return {}
+
+
+static func get_ascension_milestone(ascension_count: int) -> Dictionary:
+	if ASCENSION_MILESTONES.has(ascension_count):
+		return ASCENSION_MILESTONES[ascension_count]
+	return {}
+
+
+static func get_random_lore_snippet() -> String:
+	return LORE_SNIPPETS[randi() % LORE_SNIPPETS.size()]
+
+
+static func get_random_npc_quote(npc_type: String) -> String:
+	if NPC_QUOTES.has(npc_type):
+		var quotes = NPC_QUOTES[npc_type]
+		return quotes[randi() % quotes.size()]
 	return ""

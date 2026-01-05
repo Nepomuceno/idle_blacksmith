@@ -8,6 +8,7 @@ const WeaponDataClass = preload("res://scripts/data/weapon_data.gd")
 const UpgradeDataClass = preload("res://scripts/data/upgrade_data.gd")
 const AchievementDataClass = preload("res://scripts/data/achievement_data.gd")
 const TierDataClass = preload("res://scripts/data/tier_data.gd")
+const LoreDataClass = preload("res://scripts/data/lore_data.gd")
 const ForgeManagerClass = preload("res://scripts/managers/forge_manager.gd")
 const UpgradeManagerClass = preload("res://scripts/managers/upgrade_manager.gd")
 const AchievementManagerClass = preload("res://scripts/managers/achievement_manager.gd")
@@ -17,6 +18,7 @@ const ForgeUIClass = preload("res://scripts/ui/forge_ui.gd")
 const UpgradesUIClass = preload("res://scripts/ui/upgrades_ui.gd")
 const AchievementsUIClass = preload("res://scripts/ui/achievements_ui.gd")
 const ShopUIClass = preload("res://scripts/ui/shop_ui.gd")
+const TransitionManagerClass = preload("res://scripts/ui/transition_manager.gd")
 
 # Modular components
 var game_state
@@ -78,10 +80,17 @@ var autosave_timer: float = 0.0
 var auto_forge_timer: float = 0.0
 var auto_buy_timer: float = 0.0
 var last_tier_effect_time: float = 0.0
+var lore_tooltip_timer: float = 0.0
 const PASSIVE_TICK: float = 1.0
 const AUTOSAVE_INTERVAL: float = 30.0
 const AUTO_BUY_INTERVAL: float = 0.5  # Check every 0.5 seconds
 const MIN_TIER_EFFECT_INTERVAL: float = 0.15  # Max ~6 effects per second
+const LORE_TOOLTIP_INTERVAL: float = 120.0  # Show random lore every 2 minutes
+
+# Milestone tracking (to show popups only once)
+var shown_milestones: Dictionary = {}
+var last_unlocked_tier: int = 0
+var last_unlocked_weapon: String = ""
 
 
 func _ready() -> void:
@@ -306,6 +315,15 @@ func _process(delta: float) -> void:
 	# Check achievements
 	achievement_manager.check_all()
 	
+	# Check for milestones and show lore popups
+	_check_milestones()
+	
+	# Random lore tooltips
+	lore_tooltip_timer += delta
+	if lore_tooltip_timer >= LORE_TOOLTIP_INTERVAL:
+		lore_tooltip_timer = 0.0
+		_show_random_lore_tooltip()
+	
 	_update_floating_texts(delta)
 	forge_ui.update_display()
 
@@ -377,6 +395,9 @@ func _on_ascend_requested() -> void:
 		# Update theme intensity based on new ascension count
 		ThemeColors.set_intensity_from_ascensions(game_state.total_ascensions)
 		_update_all_ui()
+		
+		# Check for ascension milestone lore popup
+		_check_ascension_milestone(game_state.total_ascensions)
 
 
 func _on_upgrade_purchased(upgrade_id: String) -> void:
@@ -1166,3 +1187,86 @@ more realities to shape."""
 	var panel_tween = create_tween()
 	panel_tween.tween_property(panel, "modulate:a", 1.0, 1.0)
 	panel_tween.parallel().tween_property(panel, "scale", Vector2(1.0, 1.0), 0.5).from(Vector2(0.8, 0.8)).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+
+
+# ========== LORE & MILESTONES ==========
+
+func _check_milestones() -> void:
+	# Check first forge milestone
+	if game_state.total_items_forged == 1 and not shown_milestones.has("first_forge"):
+		shown_milestones["first_forge"] = true
+		_show_milestone_popup("first_forge")
+		return
+	
+	# Check 100 forged milestone
+	if game_state.total_items_forged >= 100 and not shown_milestones.has("100_forged"):
+		shown_milestones["100_forged"] = true
+		_show_milestone_popup("100_forged")
+		return
+	
+	# Check tier unlocks
+	var current_max_tier = TierDataClass.get_max_tier_for_forged(game_state.total_items_forged)
+	if current_max_tier > last_unlocked_tier:
+		var tier_keys = ["common", "uncommon", "rare", "epic", "legendary"]
+		if current_max_tier < tier_keys.size():
+			var tier_key = tier_keys[current_max_tier]
+			if not shown_milestones.has("tier_" + tier_key):
+				shown_milestones["tier_" + tier_key] = true
+				last_unlocked_tier = current_max_tier
+				_show_tier_unlock_popup(tier_key)
+				return
+	
+	# Check weapon unlocks based on ascensions
+	var weapon_unlocks = WeaponDataClass.UNLOCK_ASCENSIONS
+	for weapon_id in weapon_unlocks:
+		var required_asc = weapon_unlocks[weapon_id]
+		if required_asc > 0 and game_state.total_ascensions >= required_asc:
+			if not shown_milestones.has("weapon_" + weapon_id):
+				shown_milestones["weapon_" + weapon_id] = true
+				last_unlocked_weapon = weapon_id
+				_show_weapon_unlock_popup(weapon_id)
+				return
+
+
+func _check_ascension_milestone(ascension_count: int) -> void:
+	var milestone = LoreDataClass.get_ascension_milestone(ascension_count)
+	if not milestone.is_empty():
+		await get_tree().create_timer(1.5).timeout  # Wait for ascension animation
+		TransitionManagerClass.show_ascension_milestone(self, ascension_count)
+
+
+func _show_milestone_popup(milestone_key: String) -> void:
+	var milestone = LoreDataClass.get_milestone_narrative(milestone_key)
+	if not milestone.is_empty():
+		await get_tree().create_timer(0.5).timeout
+		TransitionManagerClass.show_lore_popup(
+			self,
+			milestone.get("title", "Milestone"),
+			milestone.get("text", ""),
+			milestone.get("quote", "")
+		)
+
+
+func _show_tier_unlock_popup(tier_key: String) -> void:
+	await get_tree().create_timer(0.3).timeout
+	TransitionManagerClass.show_tier_unlock(self, tier_key)
+
+
+func _show_weapon_unlock_popup(weapon_id: String) -> void:
+	await get_tree().create_timer(0.5).timeout
+	TransitionManagerClass.show_weapon_unlock(self, weapon_id)
+
+
+func _show_random_lore_tooltip() -> void:
+	# Only show if no popup is currently visible
+	var existing_popup = find_child("LorePopupOverlay", false, false)
+	if existing_popup:
+		return
+	
+	# Position near the forge button
+	var position = forge_ui.forge_button.global_position + Vector2(
+		forge_ui.forge_button.size.x + 20,
+		-50
+	)
+	
+	TransitionManagerClass.show_random_lore_tooltip(self, position)
