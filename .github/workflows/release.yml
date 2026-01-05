@@ -90,7 +90,7 @@ jobs:
           retention-days: 1
 
   build-macos:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -112,11 +112,98 @@ jobs:
       - name: Create export directory
         run: mkdir -p exports/macos
 
-      - name: Export game
-        run: godot --headless --export-release "macOS" exports/macos/${{ env.GAME_NAME }}.zip
+      - name: Export game (unsigned)
+        run: godot --headless --export-release "macOS" exports/macos/"Idle Blacksmith.app"
 
-      - name: Move ZIP to root
-        run: mv exports/macos/${{ env.GAME_NAME }}.zip ${{ env.GAME_NAME }}-macOS.zip
+      - name: Import signing certificate
+        if: ${{ env.APPLE_CERTIFICATE_BASE64 != '' }}
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+          
+          # Decode certificate
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > $RUNNER_TEMP/certificate.p12
+          
+          # Create and configure keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          
+          # Import certificate
+          security import $RUNNER_TEMP/certificate.p12 -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          
+          # Clean up certificate file
+          rm $RUNNER_TEMP/certificate.p12
+
+      - name: Code sign the app
+        if: ${{ env.APPLE_CERTIFICATE_BASE64 != '' }}
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          APP_PATH="exports/macos/Idle Blacksmith.app"
+          
+          # Get the signing identity
+          IDENTITY="Developer ID Application: $(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)"/\1/')"
+          
+          echo "Signing with identity: $IDENTITY"
+          
+          # Sign all frameworks and dylibs first (deep sign)
+          find "$APP_PATH" -name "*.dylib" -o -name "*.framework" | while read -r item; do
+            codesign --force --timestamp --options runtime --sign "$IDENTITY" "$item" || true
+          done
+          
+          # Sign the main executable
+          codesign --force --timestamp --options runtime --sign "$IDENTITY" "$APP_PATH/Contents/MacOS/Idle Blacksmith" || true
+          
+          # Sign the entire app bundle
+          codesign --force --deep --timestamp --options runtime --sign "$IDENTITY" "$APP_PATH"
+          
+          # Verify signature
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+
+      - name: Notarize the app
+        if: ${{ env.APPLE_ID != '' }}
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          APP_PATH="exports/macos/Idle Blacksmith.app"
+          ZIP_PATH="exports/macos/Idle Blacksmith-notarize.zip"
+          
+          # Create ZIP for notarization
+          ditto -c -k --keepParent "$APP_PATH" "$ZIP_PATH"
+          
+          # Submit for notarization
+          echo "Submitting for notarization..."
+          xcrun notarytool submit "$ZIP_PATH" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait \
+            --timeout 30m
+          
+          # Staple the notarization ticket
+          echo "Stapling notarization ticket..."
+          xcrun stapler staple "$APP_PATH"
+          
+          # Verify notarization
+          xcrun stapler validate "$APP_PATH"
+          
+          # Clean up notarization zip
+          rm "$ZIP_PATH"
+
+      - name: Create final ZIP archive
+        run: |
+          cd exports/macos
+          zip -r ../../${{ env.GAME_NAME }}-macOS.zip "Idle Blacksmith.app"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
