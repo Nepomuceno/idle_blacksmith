@@ -98,6 +98,75 @@ godot .
 
 ---
 
+## Git Workflow & Conventional Commits
+
+### Commit Message Format
+
+All commits MUST follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+### Commit Types
+
+| Type | Description |
+|------|-------------|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
+| `style` | Code style (formatting, no logic change) |
+| `refactor` | Code refactoring (no feature/fix) |
+| `perf` | Performance improvement |
+| `test` | Adding/updating tests |
+| `build` | Build system or dependencies |
+| `ci` | CI/CD configuration |
+| `chore` | Maintenance tasks |
+
+### Scopes (optional)
+
+| Scope | Area |
+|-------|------|
+| `ui` | User interface changes |
+| `forge` | Forging system |
+| `upgrades` | Upgrade system |
+| `ascension` | Ascension/souls system |
+| `settings` | Settings/config |
+| `save` | Save/load system |
+| `audio` | Sound effects |
+| `release` | Release/build pipeline |
+
+### Examples
+
+```bash
+feat(ui): add settings tab with UI scale slider
+fix(save): persist shown milestones across sessions
+docs: update agent.md with conventional commits guide
+refactor(forge): extract weapon data to separate file
+ci(release): add automated changelog generation
+```
+
+### Release Process
+
+1. Make changes with conventional commits
+2. Create a tag: `git tag v0.1.0-beta`
+3. Push tag: `git push origin v0.1.0-beta`
+4. GitHub Actions will:
+   - Build Windows, macOS, Linux
+   - Generate changelog from commits since last tag
+   - Create GitHub release with all assets
+
+### Tag Format
+
+- **Releases**: `v1.0.0`, `v1.2.3`
+- **Pre-releases**: `v0.1.0-beta`, `v1.0.0-rc.1`, `v2.0.0-alpha`
+
+---
+
 ## Documentation Update Rules
 
 ### When to Update memory.md
