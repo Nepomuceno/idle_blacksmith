@@ -18,6 +18,7 @@ const ForgeUIClass = preload("res://scripts/ui/forge_ui.gd")
 const UpgradesUIClass = preload("res://scripts/ui/upgrades_ui.gd")
 const AchievementsUIClass = preload("res://scripts/ui/achievements_ui.gd")
 const ShopUIClass = preload("res://scripts/ui/shop_ui.gd")
+const SettingsUIClass = preload("res://scripts/ui/settings_ui.gd")
 const TransitionManagerClass = preload("res://scripts/ui/transition_manager.gd")
 
 # Modular components
@@ -33,6 +34,7 @@ var forge_ui
 var upgrades_ui
 var achievements_ui
 var shop_ui
+var settings_ui
 
 # Layout state
 var is_wide_layout: bool = false
@@ -44,6 +46,7 @@ var forge_content_ref: Control = null
 var upgrades_content_ref: Control = null
 var achieve_content_ref: Control = null
 var shop_content_ref: Control = null
+var settings_content_ref: Control = null
 var content_area_ref: Control = null
 var gold_label_ref: Label = null
 var passive_label_ref: Label = null
@@ -53,6 +56,7 @@ var tab_forge_ref: Button = null
 var tab_upgrades_ref: Button = null
 var tab_achieve_ref: Button = null
 var tab_shop_ref: Button = null
+var tab_settings_ref: Button = null
 
 # Backward compatibility references for tests
 var forge_button_ref: Button = null
@@ -88,7 +92,6 @@ const MIN_TIER_EFFECT_INTERVAL: float = 0.15  # Max ~6 effects per second
 const LORE_TOOLTIP_INTERVAL: float = 120.0  # Show random lore every 2 minutes
 
 # Milestone tracking (to show popups only once)
-var shown_milestones: Dictionary = {}
 var last_unlocked_tier: int = 0
 var last_unlocked_weapon: String = ""
 
@@ -125,6 +128,10 @@ func _init_game_systems() -> void:
 	# Load saved game
 	save_manager.load_game()
 	
+	# Apply saved UI scale
+	if game_state.ui_scale != 1.0:
+		get_tree().root.content_scale_factor = game_state.ui_scale
+	
 	# Connect theme colors to game state for ascension intensity
 	ThemeColors.set_intensity_from_ascensions(game_state.total_ascensions)
 
@@ -134,6 +141,7 @@ func _cache_node_references() -> void:
 	upgrades_content_ref = %UpgradesContent
 	achieve_content_ref = %AchieveContent
 	shop_content_ref = %ShopContent
+	settings_content_ref = %SettingsContent
 	content_area_ref = %ForgeContent.get_parent()
 	
 	gold_label_ref = %GoldLabel
@@ -145,6 +153,7 @@ func _cache_node_references() -> void:
 	tab_upgrades_ref = %TabUpgrades
 	tab_achieve_ref = %TabAchieve
 	tab_shop_ref = %TabShop
+	tab_settings_ref = %TabSettings
 	
 	# Backward compatibility references for tests
 	forge_button_ref = %ForgeButton
@@ -186,6 +195,11 @@ func _init_ui_components() -> void:
 	shop_ui = ShopUIClass.new()
 	shop_ui.setup(game_state, ascension_manager, forge_manager)
 	shop_ui.shop_list = %ShopList
+	
+	# Initialize Settings UI
+	settings_ui = SettingsUIClass.new()
+	settings_ui.setup(game_state, save_manager)
+	settings_ui.settings_list = %SettingsList
 
 
 func _connect_signals() -> void:
@@ -203,7 +217,10 @@ func _connect_signals() -> void:
 	# Shop UI signals
 	shop_ui.soul_upgrade_purchased.connect(_on_soul_upgrade_purchased)
 	shop_ui.weapon_upgrade_purchased.connect(_on_weapon_upgrade_purchased)
-	shop_ui.reset_requested.connect(_on_reset_requested)
+	
+	# Settings UI signals
+	settings_ui.reset_requested.connect(_on_reset_requested)
+	settings_ui.ui_scale_changed.connect(_on_ui_scale_changed)
 	
 	# GameEvents signals
 	GameEvents.gold_changed.connect(_on_gold_changed)
@@ -246,6 +263,7 @@ func _setup_tab_buttons() -> void:
 	tab_upgrades_ref.pressed.connect(_on_tab_pressed.bind("upgrades"))
 	tab_achieve_ref.pressed.connect(_on_tab_pressed.bind("achieve"))
 	tab_shop_ref.pressed.connect(_on_tab_pressed.bind("shop"))
+	tab_settings_ref.pressed.connect(_on_tab_pressed.bind("settings"))
 
 
 # ========== GAME LOOP ==========
@@ -432,6 +450,12 @@ func _on_reset_requested() -> void:
 	_show_reset_confirmation()
 
 
+func _on_ui_scale_changed(new_scale: float) -> void:
+	# Apply UI scale to the viewport's content scale factor
+	get_tree().root.content_scale_factor = new_scale
+	save_manager.save()
+
+
 func _on_gold_changed(_new_amount: float) -> void:
 	_update_gold_display()
 	# In wide layout, upgrades are always visible so refresh them
@@ -471,11 +495,13 @@ func _show_tab(tab_name: String) -> void:
 		upgrades_content_ref.visible = false
 		achieve_content_ref.visible = false
 		shop_content_ref.visible = false
+		settings_content_ref.visible = false
 	
 	tab_forge_ref.modulate = ThemeColors.STEEL_LIGHT
 	tab_upgrades_ref.modulate = ThemeColors.STEEL_LIGHT
 	tab_achieve_ref.modulate = ThemeColors.STEEL_LIGHT
 	tab_shop_ref.modulate = ThemeColors.STEEL_LIGHT
+	tab_settings_ref.modulate = ThemeColors.STEEL_LIGHT
 	
 	match tab_name:
 		"forge":
@@ -500,6 +526,12 @@ func _show_tab(tab_name: String) -> void:
 			tab_shop_ref.modulate = ThemeColors.COLOR_SOULS
 			shop_ui.refresh()
 			_add_mobile_back_button(%ShopList)
+		"settings":
+			if settings_content_ref:
+				settings_content_ref.visible = true
+			tab_settings_ref.modulate = ThemeColors.STEEL_LIGHT
+			settings_ui.refresh()
+			_add_mobile_back_button(%SettingsList)
 
 
 # ========== LAYOUT SYSTEM ==========
@@ -512,7 +544,8 @@ func _on_window_resized() -> void:
 
 func _check_layout() -> void:
 	var size = get_viewport_rect().size
-	var new_is_wide = size.x >= 900 and size.x > size.y
+	# Wide layout when actual pixels are >= 800 wide AND landscape
+	var new_is_wide = size.x >= 700 and size.x > size.y
 	
 	if new_is_wide != is_wide_layout:
 		is_wide_layout = new_is_wide
@@ -524,8 +557,8 @@ func _apply_layout() -> void:
 		return
 	
 	if is_wide_layout:
-		forge_ui.forge_button.custom_minimum_size = Vector2(240, 70)
-		forge_ui.forge_button.add_theme_font_size_override("font_size", 28)
+		forge_ui.forge_button.custom_minimum_size = Vector2(180, 60)
+		forge_ui.forge_button.add_theme_font_size_override("font_size", 26)
 		tab_bar_ref.visible = false
 		forge_content_ref.visible = true
 		upgrades_content_ref.visible = true
@@ -533,7 +566,7 @@ func _apply_layout() -> void:
 		shop_content_ref.visible = false
 		_setup_wide_layout()
 	else:
-		forge_ui.forge_button.custom_minimum_size = Vector2(280, 90)
+		forge_ui.forge_button.custom_minimum_size = Vector2(200, 70)
 		forge_ui.forge_button.add_theme_font_size_override("font_size", 32)
 		tab_bar_ref.visible = true
 		_setup_mobile_layout()
@@ -558,6 +591,7 @@ func _setup_wide_layout() -> void:
 			wide_nav_container.visible = true
 		achieve_content_ref.visible = false
 		shop_content_ref.visible = false
+		settings_content_ref.visible = false
 		# Refresh upgrades UI when switching back to wide layout
 		upgrades_ui.refresh()
 		return
@@ -598,11 +632,19 @@ func _setup_wide_layout() -> void:
 		
 		var shop_btn = Button.new()
 		shop_btn.name = "WideShopBtn"
-		shop_btn.text = "SHOP"
+		shop_btn.text = "SOULS"
 		shop_btn.custom_minimum_size = Vector2(80, 35)
 		shop_btn.add_theme_font_size_override("font_size", 12)
 		shop_btn.pressed.connect(_on_wide_shop_pressed)
 		wide_nav_container.add_child(shop_btn)
+		
+		var settings_btn = Button.new()
+		settings_btn.name = "WideSettingsBtn"
+		settings_btn.text = "CONFIG"
+		settings_btn.custom_minimum_size = Vector2(80, 35)
+		settings_btn.add_theme_font_size_override("font_size", 12)
+		settings_btn.pressed.connect(_on_wide_settings_pressed)
+		wide_nav_container.add_child(settings_btn)
 	
 	var header_content = gold_label_ref.get_parent()
 	if wide_nav_container.get_parent() != header_content:
@@ -619,6 +661,7 @@ func _on_wide_forge_pressed() -> void:
 	wide_layout_container.visible = true
 	achieve_content_ref.visible = false
 	shop_content_ref.visible = false
+	settings_content_ref.visible = false
 	_update_wide_nav_highlight("forge")
 
 
@@ -628,6 +671,7 @@ func _on_wide_achieve_pressed() -> void:
 	wide_layout_container.visible = false
 	achieve_content_ref.visible = true
 	shop_content_ref.visible = false
+	settings_content_ref.visible = false
 	achievements_ui.refresh()
 	_update_wide_nav_highlight("achieve")
 
@@ -638,8 +682,20 @@ func _on_wide_shop_pressed() -> void:
 	wide_layout_container.visible = false
 	achieve_content_ref.visible = false
 	shop_content_ref.visible = true
+	settings_content_ref.visible = false
 	shop_ui.refresh()
 	_update_wide_nav_highlight("shop")
+
+
+func _on_wide_settings_pressed() -> void:
+	if upgrade_sound.stream:
+		upgrade_sound.play()
+	wide_layout_container.visible = false
+	achieve_content_ref.visible = false
+	shop_content_ref.visible = false
+	settings_content_ref.visible = true
+	settings_ui.refresh()
+	_update_wide_nav_highlight("settings")
 
 
 func _update_wide_nav_highlight(active: String) -> void:
@@ -649,6 +705,7 @@ func _update_wide_nav_highlight(active: String) -> void:
 	var forge_btn = wide_nav_container.find_child("WideForgeBtn", false, false)
 	var achieve_btn = wide_nav_container.find_child("WideAchieveBtn", false, false)
 	var shop_btn = wide_nav_container.find_child("WideShopBtn", false, false)
+	var settings_btn = wide_nav_container.find_child("WideSettingsBtn", false, false)
 	
 	# Reset all to default
 	if forge_btn:
@@ -657,6 +714,8 @@ func _update_wide_nav_highlight(active: String) -> void:
 		achieve_btn.modulate = Color(0.7, 0.7, 0.7) if active != "achieve" else Color(1, 1, 1)
 	if shop_btn:
 		shop_btn.modulate = Color(0.7, 0.7, 0.7) if active != "shop" else Color(1, 1, 1)
+	if settings_btn:
+		settings_btn.modulate = Color(0.7, 0.7, 0.7) if active != "settings" else Color(1, 1, 1)
 
 
 func _setup_mobile_layout() -> void:
@@ -836,10 +895,10 @@ func _flash_screen(color: Color) -> void:
 func _spawn_floating_text(text: String, color: Color) -> void:
 	var label = Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", 28)
+	label.add_theme_font_size_override("font_size", 20)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color.BLACK)
-	label.add_theme_constant_override("outline_size", 3)
+	label.add_theme_constant_override("outline_size", 2)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	
 	var forge_pos = forge_ui.forge_button.global_position + forge_ui.forge_button.size / 2
@@ -1193,14 +1252,14 @@ more realities to shape."""
 
 func _check_milestones() -> void:
 	# Check first forge milestone
-	if game_state.total_items_forged == 1 and not shown_milestones.has("first_forge"):
-		shown_milestones["first_forge"] = true
+	if game_state.total_items_forged == 1 and not game_state.shown_milestones.has("first_forge"):
+		game_state.shown_milestones["first_forge"] = true
 		_show_milestone_popup("first_forge")
 		return
 	
 	# Check 100 forged milestone
-	if game_state.total_items_forged >= 100 and not shown_milestones.has("100_forged"):
-		shown_milestones["100_forged"] = true
+	if game_state.total_items_forged >= 100 and not game_state.shown_milestones.has("100_forged"):
+		game_state.shown_milestones["100_forged"] = true
 		_show_milestone_popup("100_forged")
 		return
 	
@@ -1210,8 +1269,8 @@ func _check_milestones() -> void:
 		var tier_keys = ["common", "uncommon", "rare", "epic", "legendary"]
 		if current_max_tier < tier_keys.size():
 			var tier_key = tier_keys[current_max_tier]
-			if not shown_milestones.has("tier_" + tier_key):
-				shown_milestones["tier_" + tier_key] = true
+			if not game_state.shown_milestones.has("tier_" + tier_key):
+				game_state.shown_milestones["tier_" + tier_key] = true
 				last_unlocked_tier = current_max_tier
 				_show_tier_unlock_popup(tier_key)
 				return
@@ -1221,8 +1280,8 @@ func _check_milestones() -> void:
 	for weapon_id in weapon_unlocks:
 		var required_asc = weapon_unlocks[weapon_id]
 		if required_asc > 0 and game_state.total_ascensions >= required_asc:
-			if not shown_milestones.has("weapon_" + weapon_id):
-				shown_milestones["weapon_" + weapon_id] = true
+			if not game_state.shown_milestones.has("weapon_" + weapon_id):
+				game_state.shown_milestones["weapon_" + weapon_id] = true
 				last_unlocked_weapon = weapon_id
 				_show_weapon_unlock_popup(weapon_id)
 				return

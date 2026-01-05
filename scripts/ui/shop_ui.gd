@@ -8,7 +8,6 @@ const GameState = preload("res://scripts/data/game_state.gd")
 
 signal soul_upgrade_purchased(upgrade_id: String)
 signal weapon_upgrade_purchased(weapon_id: String)
-signal reset_requested
 
 var game_state
 var ascension_manager
@@ -58,25 +57,6 @@ func refresh() -> void:
 	_create_weapon_upgrades()
 	
 	_add_spacer(20)
-	
-	# Reset button
-	var reset_btn = Button.new()
-	reset_btn.text = "RESET ALL PROGRESS"
-	reset_btn.custom_minimum_size = Vector2(0, 50)
-	reset_btn.add_theme_font_size_override("font_size", 14)
-	reset_btn.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
-	reset_btn.pressed.connect(_on_reset_pressed)
-	shop_list.add_child(reset_btn)
-	
-	_add_spacer(30)
-	
-	# Credits
-	var credit_label = Label.new()
-	credit_label.text = "Developed by Gabriel Nepomuceno"
-	credit_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	credit_label.add_theme_font_size_override("font_size", 12)
-	credit_label.add_theme_color_override("font_color", ThemeColors.STEEL_DARK)
-	shop_list.add_child(credit_label)
 
 
 func _add_spacer(height: int) -> void:
@@ -185,10 +165,6 @@ func _on_weapon_upgrade_pressed(weapon_id: String) -> void:
 	if ascension_manager.purchase_weapon_upgrade(weapon_id, forge_manager):
 		weapon_upgrade_purchased.emit(weapon_id)
 		refresh()
-
-
-func _on_reset_pressed() -> void:
-	reset_requested.emit()
 
 
 func _create_auto_buy_toggle() -> void:

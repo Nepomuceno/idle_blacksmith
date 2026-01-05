@@ -44,7 +44,9 @@ func save() -> void:
 		"game_completed": game_state.game_completed,
 		"unlocked_achievements": game_state.unlocked_achievements,
 		"pending_achievement_rewards": game_state.pending_achievement_rewards,
-		"last_save_timestamp": game_state.last_save_timestamp
+		"last_save_timestamp": game_state.last_save_timestamp,
+		"shown_milestones": game_state.shown_milestones,
+		"ui_scale": game_state.ui_scale
 	}
 	
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -123,6 +125,12 @@ func load_game() -> bool:
 	
 	if data.has("unlocked_achievements"):
 		game_state.unlocked_achievements = data["unlocked_achievements"]
+	
+	if data.has("shown_milestones"):
+		for key in data["shown_milestones"]:
+			game_state.shown_milestones[key] = data["shown_milestones"][key]
+	
+	game_state.ui_scale = data.get("ui_scale", 1.0)
 	
 	GameEvents.game_loaded.emit()
 	return true

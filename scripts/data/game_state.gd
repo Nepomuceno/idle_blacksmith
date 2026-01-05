@@ -76,6 +76,12 @@ var pending_achievement_rewards: float = 0.0
 # Offline progress
 var last_save_timestamp: float = 0.0
 
+# Shown milestones (to prevent repeat popups)
+var shown_milestones: Dictionary = {}
+
+# Settings
+var ui_scale: float = 1.0  # 0.8 to 1.5
+
 
 func _init() -> void:
 	pass
@@ -147,6 +153,8 @@ func reset() -> void:
 	# Note: game_completed is NOT reset - it's permanent
 	discovered_upgrades.clear()
 	unlocked_achievements.clear()
+	shown_milestones.clear()
+	ui_scale = 1.0
 
 
 # Utility functions for formatting
