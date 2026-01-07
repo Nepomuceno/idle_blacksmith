@@ -220,6 +220,19 @@ jobs:
         with:
           lfs: true
 
+      - name: Pull LFS files
+        run: git lfs pull
+
+      - name: Verify Android template
+        run: |
+          echo "Checking android folder contents..."
+          ls -la android/
+          ls -la android/libs/debug/ || echo "No debug libs"
+          ls -la android/libs/release/ || echo "No release libs"
+          # Check if LFS files are actual files (not pointers)
+          file android/libs/debug/godot-lib.template_debug.aar || true
+          file android/libs/release/godot-lib.template_release.aar || true
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
