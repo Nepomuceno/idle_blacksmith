@@ -149,8 +149,8 @@ jobs:
         run: |
           APP_PATH="exports/macos/Idle Blacksmith.app"
           
-          # Get the signing identity
-          IDENTITY="Developer ID Application: $(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)"/\1/')"
+          # Get the signing identity (full name including "Developer ID Application:")
+          IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)"/\1/')
           
           echo "Signing with identity: $IDENTITY"
           
