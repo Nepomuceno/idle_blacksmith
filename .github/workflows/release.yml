@@ -259,26 +259,42 @@ jobs:
           # Decode keystore
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > $RUNNER_TEMP/release.keystore
           
-          # Configure Godot editor settings for Android
+          # Configure Godot editor settings for Android (BEFORE import)
           mkdir -p ~/.config/godot
-          cat > ~/.config/godot/editor_settings-4.tres << EOF
+          cat > ~/.config/godot/editor_settings-4.tres << 'EDITOR_EOF'
           [gd_resource type="EditorSettings" format=3]
-          [resource]
-          export/android/android_sdk_path = "$ANDROID_HOME"
-          export/android/debug_keystore = "$RUNNER_TEMP/release.keystore"
-          export/android/debug_keystore_user = "$ANDROID_KEYSTORE_ALIAS"
-          export/android/debug_keystore_pass = "$ANDROID_KEYSTORE_PASSWORD"
-          EOF
           
-          # Update export_presets.cfg with keystore info
-          sed -i 's|keystore/release = ".*"|keystore/release = "'$RUNNER_TEMP'/release.keystore"|g' export_presets.cfg
-          sed -i 's|keystore/release_user = ".*"|keystore/release_user = "'$ANDROID_KEYSTORE_ALIAS'"|g' export_presets.cfg
-          sed -i 's|keystore/release_password = ".*"|keystore/release_password = "'$ANDROID_KEYSTORE_PASSWORD'"|g' export_presets.cfg
+          [resource]
+          EDITOR_EOF
+          
+          # Append settings using proper Godot format (no leading spaces)
+          echo "export/android/android_sdk_path = \"$ANDROID_HOME\"" >> ~/.config/godot/editor_settings-4.tres
+          echo "export/android/debug_keystore = \"$RUNNER_TEMP/release.keystore\"" >> ~/.config/godot/editor_settings-4.tres
+          echo "export/android/debug_keystore_user = \"$ANDROID_KEYSTORE_ALIAS\"" >> ~/.config/godot/editor_settings-4.tres
+          echo "export/android/debug_keystore_pass = \"$ANDROID_KEYSTORE_PASSWORD\"" >> ~/.config/godot/editor_settings-4.tres
+          
+          # Show the generated settings file
+          echo "=== Editor Settings ==="
+          cat ~/.config/godot/editor_settings-4.tres
+          echo "======================="
+          
+          # Add keystore settings to export_presets.cfg
+          # The preset doesn't have these fields by default, so we add them
+          sed -i '/\[preset.3.options\]/a keystore/release = "'$RUNNER_TEMP'/release.keystore"\nkeystore/release_user = "'$ANDROID_KEYSTORE_ALIAS'"\nkeystore/release_password = "'$ANDROID_KEYSTORE_PASSWORD'"' export_presets.cfg
 
       - name: Import project
         run: |
           godot --headless --import
           godot --headless --import
+          
+      - name: Verify Godot sees Android template
+        run: |
+          echo "Checking project.godot..."
+          cat project.godot | grep -i android || echo "No android in project.godot"
+          echo ""
+          echo "Listing android dir structure..."
+          find android -type f -name "*.gradle" | head -10
+          find android -type f -name "*.aar" | head -5
 
       - name: Create export directory
         run: mkdir -p exports/android
