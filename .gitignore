@@ -43,3 +43,4 @@ mono_crash.*.json
 # Export presets may contain sensitive info (team IDs, etc.)
 # Uncomment if you want to keep these private:
 # export_presets.cfg
+.env
