@@ -34,22 +34,24 @@ func refresh() -> void:
 
 func _create_stats_summary() -> void:
 	var stats_panel = PanelContainer.new()
-	stats_panel.custom_minimum_size = Vector2(0, 40)
+	stats_panel.custom_minimum_size = Vector2(0, 48)
 	
 	var style = StyleBoxFlat.new()
-	style.bg_color = ThemeColors.BG_PANEL
-	style.border_color = ThemeColors.BORDER_STEEL
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(6)
-	style.content_margin_left = 12
-	style.content_margin_right = 12
-	style.content_margin_top = 8
-	style.content_margin_bottom = 8
+	style.bg_color = Color(0.05, 0.055, 0.08, 0.95)
+	style.border_color = Color(0.45, 0.5, 0.55, 0.6)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(10)
+	style.shadow_color = Color(0, 0, 0, 0.15)
+	style.shadow_size = 2
+	style.content_margin_left = 14
+	style.content_margin_right = 14
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
 	stats_panel.add_theme_stylebox_override("panel", style)
 	
 	var stats_hbox = HBoxContainer.new()
 	stats_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	stats_hbox.add_theme_constant_override("separation", 20)
+	stats_hbox.add_theme_constant_override("separation", 24)
 	
 	# Click power stat
 	var click_stat = _create_stat_display(
@@ -88,7 +90,7 @@ func _create_stats_summary() -> void:
 	upgrades_list.add_child(stats_panel)
 	
 	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 6)
+	spacer.custom_minimum_size = Vector2(0, 8)
 	upgrades_list.add_child(spacer)
 
 
@@ -98,14 +100,16 @@ func _create_stat_display(value: String, suffix: String, color: Color) -> HBoxCo
 	
 	var value_label = Label.new()
 	value_label.text = value
-	value_label.add_theme_font_size_override("font_size", 16)
+	value_label.add_theme_font_size_override("font_size", 17)
 	value_label.add_theme_color_override("font_color", color)
+	value_label.add_theme_color_override("font_outline_color", color * 0.25)
+	value_label.add_theme_constant_override("outline_size", 1)
 	container.add_child(value_label)
 	
 	var suffix_label = Label.new()
 	suffix_label.text = suffix
-	suffix_label.add_theme_font_size_override("font_size", 11)
-	suffix_label.add_theme_color_override("font_color", ThemeColors.STEEL_LIGHT)
+	suffix_label.add_theme_font_size_override("font_size", 12)
+	suffix_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.65))
 	container.add_child(suffix_label)
 	
 	return container
@@ -123,33 +127,42 @@ func _create_upgrade_card(upgrade_id: String) -> PanelContainer:
 	
 	var card = PanelContainer.new()
 	card.name = upgrade_id
-	card.custom_minimum_size = Vector2(0, 80)
+	card.custom_minimum_size = Vector2(0, 72)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	
 	var card_style = StyleBoxFlat.new()
 	if is_maxed:
-		card_style.bg_color = Color(0.12, 0.16, 0.12, 0.9)
-		card_style.border_color = Color(0.4, 0.7, 0.4, 0.8)
+		card_style.bg_color = Color(0.08, 0.12, 0.08, 0.95)
+		card_style.border_color = Color(0.35, 0.65, 0.35, 0.9)
 	elif can_afford:
-		card_style.bg_color = ThemeColors.BG_PANEL.lightened(0.05)
-		card_style.border_color = effect_color * 0.8
+		card_style.bg_color = Color(0.06, 0.055, 0.08, 0.95)
+		card_style.border_color = effect_color * 0.85
 	else:
-		card_style.bg_color = ThemeColors.BG_MAIN.lightened(0.02)
-		card_style.border_color = ThemeColors.STEEL_DARK
+		card_style.bg_color = Color(0.04, 0.04, 0.055, 0.9)
+		card_style.border_color = Color(0.3, 0.3, 0.35, 0.5)
 	
-	card_style.border_width_left = 4
-	card_style.border_width_right = 1
-	card_style.border_width_top = 1
-	card_style.border_width_bottom = 1
-	card_style.set_corner_radius_all(8)
-	card_style.content_margin_left = 14
-	card_style.content_margin_right = 12
-	card_style.content_margin_top = 10
-	card_style.content_margin_bottom = 10
+	card_style.border_width_left = 5
+	card_style.border_width_right = 2
+	card_style.border_width_top = 2
+	card_style.border_width_bottom = 2
+	card_style.corner_radius_top_left = 10
+	card_style.corner_radius_top_right = 10
+	card_style.corner_radius_bottom_left = 10
+	card_style.corner_radius_bottom_right = 10
+	card_style.content_margin_left = 12
+	card_style.content_margin_right = 10
+	card_style.content_margin_top = 8
+	card_style.content_margin_bottom = 8
+	
+	# Add subtle glow for affordable
+	if can_afford and not is_maxed:
+		card_style.shadow_color = effect_color * 0.3
+		card_style.shadow_size = 3
+	
 	card.add_theme_stylebox_override("panel", card_style)
 	
 	var main_hbox = HBoxContainer.new()
-	main_hbox.add_theme_constant_override("separation", 10)
+	main_hbox.add_theme_constant_override("separation", 12)
 	
 	# Icon
 	var icon_container = _create_icon_container(data, effect_color, is_maxed, can_afford)
@@ -171,11 +184,21 @@ func _create_upgrade_card(upgrade_id: String) -> PanelContainer:
 
 func _create_icon_container(data: Dictionary, effect_color: Color, is_maxed: bool, can_afford: bool) -> PanelContainer:
 	var icon_container = PanelContainer.new()
-	icon_container.custom_minimum_size = Vector2(48, 48)
+	icon_container.custom_minimum_size = Vector2(44, 44)
 	
 	var icon_style = StyleBoxFlat.new()
-	icon_style.bg_color = effect_color * 0.15 if (can_afford or is_maxed) else Color(0.1, 0.1, 0.12)
-	icon_style.set_corner_radius_all(6)
+	if is_maxed:
+		icon_style.bg_color = Color(0.15, 0.25, 0.15, 0.9)
+		icon_style.border_color = Color(0.4, 0.7, 0.4, 0.7)
+	elif can_afford:
+		icon_style.bg_color = effect_color * 0.2
+		icon_style.border_color = effect_color * 0.6
+	else:
+		icon_style.bg_color = Color(0.08, 0.08, 0.1, 0.9)
+		icon_style.border_color = Color(0.25, 0.25, 0.3, 0.5)
+	
+	icon_style.set_border_width_all(2)
+	icon_style.set_corner_radius_all(8)
 	icon_container.add_theme_stylebox_override("panel", icon_style)
 	
 	var icon_path = "res://assets/icons/" + data.get("icon", "")
@@ -185,7 +208,7 @@ func _create_icon_container(data: Dictionary, effect_color: Color, is_maxed: boo
 		tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tex_rect.texture = load(icon_path)
 		if not can_afford and not is_maxed:
-			tex_rect.modulate = Color(0.5, 0.5, 0.5)
+			tex_rect.modulate = Color(0.45, 0.45, 0.45)
 		icon_container.add_child(tex_rect)
 	
 	return icon_container
