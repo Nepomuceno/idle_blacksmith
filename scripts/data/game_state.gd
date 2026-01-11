@@ -83,6 +83,30 @@ var shown_milestones: Dictionary = {}
 var ui_scale: float = 1.0  # 0.8 to 1.5
 var sound_enabled: bool = true
 
+# ========== NEW FEATURES ==========
+
+# Forge Streak/Combo System
+var forge_streak: int = 0           # Current consecutive forge count
+var forge_streak_timer: float = 0.0  # Time since last forge
+var best_streak: int = 0            # Best streak ever achieved
+const STREAK_TIMEOUT: float = 2.0    # Seconds before streak resets
+const MAX_STREAK_BONUS: float = 0.5  # Max +50% bonus from streaks
+
+# Daily Login Bonus
+var daily_login_streak: int = 0     # Consecutive days logged in
+var last_login_date: String = ""    # Last login date (YYYY-MM-DD)
+var daily_bonus_claimed: bool = false  # Whether today's bonus was claimed
+
+# Weapon Mastery (specialization bonus based on items forged)
+# Mastery bonus: +1% per 100 items forged with that weapon
+const MASTERY_ITEMS_PER_LEVEL: int = 100
+const MASTERY_BONUS_PER_LEVEL: float = 0.01  # +1% per level
+
+# Critical Forge
+var crit_chance: float = 0.05       # Base 5% crit chance
+var last_forge_was_crit: bool = false
+const CRIT_MULTIPLIER: float = 2.0  # Crits give 2x gold
+
 
 func _init() -> void:
 	pass
@@ -157,6 +181,16 @@ func reset() -> void:
 	shown_milestones.clear()
 	ui_scale = 1.0
 	sound_enabled = true
+	
+	# Reset new features
+	forge_streak = 0
+	forge_streak_timer = 0.0
+	best_streak = 0
+	daily_login_streak = 0
+	last_login_date = ""
+	daily_bonus_claimed = false
+	crit_chance = 0.05
+	last_forge_was_crit = false
 
 
 # Utility functions for formatting
@@ -188,3 +222,124 @@ static func format_souls(num: int) -> String:
 
 func get_formatted_gold() -> String:
 	return format_number(gold)
+
+
+# ========== NEW FEATURE HELPERS ==========
+
+## Get streak bonus multiplier (0.0 to MAX_STREAK_BONUS)
+func get_streak_bonus() -> float:
+	# Each streak level gives +1%, capped at MAX_STREAK_BONUS
+	return minf(forge_streak * 0.01, MAX_STREAK_BONUS)
+
+
+## Get weapon mastery level for a specific weapon
+func get_weapon_mastery_level(weapon_id: String) -> int:
+	var forged = items_forged.get(weapon_id, 0)
+	return forged / MASTERY_ITEMS_PER_LEVEL
+
+
+## Get weapon mastery bonus multiplier
+func get_weapon_mastery_bonus(weapon_id: String) -> float:
+	var level = get_weapon_mastery_level(weapon_id)
+	return level * MASTERY_BONUS_PER_LEVEL
+
+
+## Get effective crit chance (includes soul_luck bonus)
+func get_effective_crit_chance() -> float:
+	var luck_bonus = ascension_upgrades.get("soul_luck", 0) * 0.02  # +2% per soul_luck level
+	return minf(crit_chance + luck_bonus, 0.50)  # Cap at 50%
+
+
+## Get player title based on ascension count
+func get_player_title() -> String:
+	if total_ascensions >= 100:
+		return "One With The Forge"
+	elif total_ascensions >= 50:
+		return "Eternal Smith"
+	elif total_ascensions >= 25:
+		return "Living Legend"
+	elif total_ascensions >= 10:
+		return "Arcane Master"
+	elif total_ascensions >= 7:
+		return "Temple Guardian"
+	elif total_ascensions >= 5:
+		return "Dragon's Bane"
+	elif total_ascensions >= 3:
+		return "Wind Walker"
+	elif total_ascensions >= 2:
+		return "Path of Power"
+	elif total_ascensions >= 1:
+		return "Transcended"
+	else:
+		return "Apprentice Smith"
+
+
+## Update streak timer - called every frame
+func update_streak(delta: float) -> void:
+	if forge_streak > 0:
+		forge_streak_timer += delta
+		if forge_streak_timer >= STREAK_TIMEOUT:
+			forge_streak = 0
+			forge_streak_timer = 0.0
+
+
+## Register a manual forge for streak
+func register_forge_for_streak() -> void:
+	forge_streak += 1
+	forge_streak_timer = 0.0
+	if forge_streak > best_streak:
+		best_streak = forge_streak
+
+
+## Check and update daily login
+func check_daily_login() -> Dictionary:
+	var current_date = Time.get_date_string_from_system()
+	
+	if last_login_date == "":
+		# First time playing
+		last_login_date = current_date
+		daily_login_streak = 1
+		daily_bonus_claimed = false
+		return {"is_new_day": true, "streak": 1}
+	
+	if current_date == last_login_date:
+		# Same day, nothing to do
+		return {"is_new_day": false, "streak": daily_login_streak}
+	
+	# Calculate days between
+	var last_dict = Time.get_datetime_dict_from_datetime_string(last_login_date + "T00:00:00", false)
+	var curr_dict = Time.get_datetime_dict_from_datetime_string(current_date + "T00:00:00", false)
+	
+	var last_unix = Time.get_unix_time_from_datetime_dict(last_dict)
+	var curr_unix = Time.get_unix_time_from_datetime_dict(curr_dict)
+	var days_diff = int((curr_unix - last_unix) / 86400)
+	
+	if days_diff == 1:
+		# Consecutive day
+		daily_login_streak += 1
+	else:
+		# Streak broken
+		daily_login_streak = 1
+	
+	last_login_date = current_date
+	daily_bonus_claimed = false
+	return {"is_new_day": true, "streak": daily_login_streak}
+
+
+## Get daily bonus amount based on streak
+func get_daily_bonus() -> Dictionary:
+	# Day 1-6: Gold bonus (100 * day)
+	# Day 7: 1 Soul + gold
+	var day_in_week = ((daily_login_streak - 1) % 7) + 1
+	var gold_bonus = 100.0 * day_in_week * (1.0 + total_ascensions * 0.1)
+	var soul_bonus = 0
+	
+	if day_in_week == 7:
+		soul_bonus = 1 + (total_ascensions / 10)  # +1 soul per 10 ascensions
+	
+	return {
+		"day": day_in_week,
+		"streak": daily_login_streak,
+		"gold": gold_bonus,
+		"souls": soul_bonus
+	}

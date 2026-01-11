@@ -114,6 +114,7 @@ func _ready() -> void:
 	scene_ready = true
 	get_viewport().size_changed.connect(_on_window_resized)
 	_check_offline_progress()
+	_check_daily_login()
 
 
 func _init_game_systems() -> void:
@@ -279,6 +280,9 @@ func _setup_tab_buttons() -> void:
 # ========== GAME LOOP ==========
 
 func _process(delta: float) -> void:
+	# Update streak timer
+	game_state.update_streak(delta)
+	
 	# Passive income
 	if game_state.passive_income > 0:
 		passive_timer += delta
@@ -392,11 +396,22 @@ func _do_auto_ascend() -> void:
 # ========== EVENT HANDLERS ==========
 
 func _on_forge_requested() -> void:
+	# Register forge for streak bonus
+	game_state.register_forge_for_streak()
+	
 	var result = forge_manager.forge()
 	
 	_play_sound(forge_sound, true)
 	
-	_spawn_floating_text("+%s" % GameStateClass.format_number(result["value"]), result["tier_color"])
+	# Show crit effect if applicable
+	var text_color = result["tier_color"]
+	var value_text = "+%s" % GameStateClass.format_number(result["value"])
+	if result.get("is_crit", false):
+		value_text = "CRIT! " + value_text
+		text_color = Color(1.0, 0.2, 0.2)  # Red for crits
+		_flash_screen(Color(1.0, 0.3, 0.1))  # Orange flash for crits
+	
+	_spawn_floating_text(value_text, text_color)
 	forge_ui.show_forge_result(result)
 	_animate_forge_button()
 	
@@ -783,16 +798,21 @@ func _update_gold_display() -> void:
 	if auto_rate > 0:
 		info_parts.append("%.1f forges/s" % auto_rate)
 	
+	# Show streak if active
+	if game_state.forge_streak > 0:
+		info_parts.append("Streak: %dx" % game_state.forge_streak)
+	
 	if info_parts.size() > 0:
 		passive_label_ref.text = " | ".join(info_parts)
 		passive_label_ref.visible = true
 	else:
 		passive_label_ref.visible = false
 	
-	# Ascension label
+	# Ascension label with player title
 	if game_state.total_ascensions > 0 or game_state.ancient_souls > 0:
 		ascension_label_ref.visible = true
-		ascension_label_ref.text = "%s Souls | Asc %d" % [GameStateClass.format_souls(game_state.ancient_souls), game_state.total_ascensions]
+		var title = game_state.get_player_title()
+		ascension_label_ref.text = "%s | %s Souls | Asc %d" % [title, GameStateClass.format_souls(game_state.ancient_souls), game_state.total_ascensions]
 	else:
 		ascension_label_ref.visible = false
 
@@ -949,6 +969,116 @@ func _check_offline_progress() -> void:
 	var offline = save_manager.calculate_offline_progress()
 	if offline["gold"] > 0:
 		_show_offline_popup(offline["gold"], offline["seconds"])
+
+
+func _check_daily_login() -> void:
+	var login_result = game_state.check_daily_login()
+	if login_result["is_new_day"] and not game_state.daily_bonus_claimed:
+		# Delay to not overlap with offline popup
+		await get_tree().create_timer(0.5).timeout
+		var existing_popup = find_child("OfflineOverlay", false, false)
+		if existing_popup:
+			await existing_popup.tree_exited
+		_show_daily_bonus_popup()
+
+
+func _show_daily_bonus_popup() -> void:
+	var bonus = game_state.get_daily_bonus()
+	
+	var overlay = ColorRect.new()
+	overlay.name = "DailyBonusOverlay"
+	overlay.color = Color(0, 0, 0, 0.7)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+	
+	var panel = PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(300, 220)
+	panel.pivot_offset = Vector2(150, 110)
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.1, 0.15, 0.98)
+	style.border_color = Color(0.3, 0.8, 1.0, 0.9)
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(16)
+	style.content_margin_left = 20
+	style.content_margin_right = 20
+	style.content_margin_top = 20
+	style.content_margin_bottom = 20
+	panel.add_theme_stylebox_override("panel", style)
+	
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 12)
+	
+	var title = Label.new()
+	title.text = "Daily Bonus!"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color(0.3, 0.9, 1.0))
+	vbox.add_child(title)
+	
+	var streak_label = Label.new()
+	streak_label.text = "Day %d of 7 | Streak: %d days" % [bonus["day"], bonus["streak"]]
+	streak_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	streak_label.add_theme_font_size_override("font_size", 14)
+	streak_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	vbox.add_child(streak_label)
+	
+	# Show day indicators
+	var days_hbox = HBoxContainer.new()
+	days_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	days_hbox.add_theme_constant_override("separation", 8)
+	for i in range(1, 8):
+		var day_box = ColorRect.new()
+		day_box.custom_minimum_size = Vector2(24, 24)
+		if i < bonus["day"]:
+			day_box.color = Color(0.2, 0.6, 0.2)  # Past days - green
+		elif i == bonus["day"]:
+			day_box.color = Color(1.0, 0.8, 0.2)  # Current day - gold
+		else:
+			day_box.color = Color(0.3, 0.3, 0.3)  # Future days - gray
+		days_hbox.add_child(day_box)
+	vbox.add_child(days_hbox)
+	
+	var reward_label = Label.new()
+	if bonus["souls"] > 0:
+		reward_label.text = "+%s Gold\n+%d Soul%s" % [GameStateClass.format_number(bonus["gold"]), bonus["souls"], "s" if bonus["souls"] > 1 else ""]
+		reward_label.add_theme_color_override("font_color", ThemeColors.COLOR_SOULS)
+	else:
+		reward_label.text = "+%s Gold" % GameStateClass.format_number(bonus["gold"])
+		reward_label.add_theme_color_override("font_color", ThemeColors.GOLD_TEXT)
+	reward_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	reward_label.add_theme_font_size_override("font_size", 22)
+	vbox.add_child(reward_label)
+	
+	var claim_btn = Button.new()
+	claim_btn.text = "Claim!"
+	claim_btn.custom_minimum_size = Vector2(150, 50)
+	claim_btn.add_theme_font_size_override("font_size", 18)
+	claim_btn.pressed.connect(func():
+		game_state.gold += bonus["gold"]
+		game_state.total_gold_earned += bonus["gold"]
+		if bonus["souls"] > 0:
+			game_state.ancient_souls += bonus["souls"]
+		game_state.daily_bonus_claimed = true
+		GameEvents.gold_changed.emit(game_state.gold)
+		_update_gold_display()
+		_play_sound(ascend_sound)
+		_spawn_floating_text("Daily Bonus!", Color(0.3, 0.9, 1.0))
+		overlay.queue_free()
+		save_manager.save()
+	)
+	vbox.add_child(claim_btn)
+	
+	panel.add_child(vbox)
+	overlay.add_child(panel)
+	panel.position = (get_viewport_rect().size - panel.custom_minimum_size) / 2
+	
+	panel.scale = Vector2(0.5, 0.5)
+	var tween = create_tween()
+	tween.tween_property(panel, "scale", Vector2(1.0, 1.0), 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 
 
 func _show_offline_popup(gold_earned: float, seconds_away: float) -> void:

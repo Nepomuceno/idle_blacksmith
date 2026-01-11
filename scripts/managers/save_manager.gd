@@ -47,7 +47,13 @@ func save() -> void:
 		"last_save_timestamp": game_state.last_save_timestamp,
 		"shown_milestones": game_state.shown_milestones,
 		"ui_scale": game_state.ui_scale,
-		"sound_enabled": game_state.sound_enabled
+		"sound_enabled": game_state.sound_enabled,
+		# New features
+		"best_streak": game_state.best_streak,
+		"daily_login_streak": game_state.daily_login_streak,
+		"last_login_date": game_state.last_login_date,
+		"daily_bonus_claimed": game_state.daily_bonus_claimed,
+		"crit_chance": game_state.crit_chance
 	}
 	
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -133,6 +139,13 @@ func load_game() -> bool:
 	
 	game_state.ui_scale = data.get("ui_scale", 1.0)
 	game_state.sound_enabled = data.get("sound_enabled", true)
+	
+	# Load new features
+	game_state.best_streak = data.get("best_streak", 0)
+	game_state.daily_login_streak = data.get("daily_login_streak", 0)
+	game_state.last_login_date = data.get("last_login_date", "")
+	game_state.daily_bonus_claimed = data.get("daily_bonus_claimed", false)
+	game_state.crit_chance = data.get("crit_chance", 0.05)
 	
 	GameEvents.game_loaded.emit()
 	return true

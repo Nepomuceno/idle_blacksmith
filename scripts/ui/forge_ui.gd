@@ -197,12 +197,34 @@ func _update_weapon_display() -> void:
 	if value_label:
 		var total = forge_manager.get_weapon_value(weapon_id)
 		var weapon_mult = game_state.weapon_multipliers.get(weapon_id, 1.0)
-		value_label.text = "Value: %s" % GameState.format_number(total)
+		var mastery_level = game_state.get_weapon_mastery_level(weapon_id)
+		var mastery_bonus = game_state.get_weapon_mastery_bonus(weapon_id)
+		
+		var value_parts = ["Value: %s" % GameState.format_number(total)]
+		
 		if weapon_mult > 1.0:
-			value_label.text += "  |  Bonus: x%.2f" % weapon_mult
+			value_parts.append("Soul: x%.2f" % weapon_mult)
+		
+		if mastery_level > 0:
+			value_parts.append("Mastery Lv%d (+%d%%)" % [mastery_level, int(mastery_bonus * 100)])
+		
+		value_label.text = " | ".join(value_parts)
 	
 	if streak_label:
-		streak_label.text = "Forged: %d" % game_state.items_forged.get(weapon_id, 0)
+		var forged_count = game_state.items_forged.get(weapon_id, 0)
+		var streak_text = "Forged: %d" % forged_count
+		
+		# Show current streak bonus if active
+		if game_state.forge_streak > 0:
+			var streak_bonus = game_state.get_streak_bonus()
+			streak_text += " | Streak: %dx (+%d%%)" % [game_state.forge_streak, int(streak_bonus * 100)]
+		
+		# Show crit chance
+		var crit_chance = game_state.get_effective_crit_chance()
+		if crit_chance > 0.05:  # Show if above base
+			streak_text += " | Crit: %d%%" % int(crit_chance * 100)
+		
+		streak_label.text = streak_text
 		streak_label.visible = true
 
 
@@ -244,5 +266,11 @@ func show_forge_result(result: Dictionary) -> void:
 	if last_forged_label:
 		var tier_name = result.get("tier_name", "Common")
 		var tier_color = result.get("tier_color", Color.WHITE)
-		last_forged_label.text = "Last: %s" % tier_name
-		last_forged_label.add_theme_color_override("font_color", tier_color)
+		var is_crit = result.get("is_crit", false)
+		
+		if is_crit:
+			last_forged_label.text = "CRIT! %s" % tier_name
+			last_forged_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.2))
+		else:
+			last_forged_label.text = "Last: %s" % tier_name
+			last_forged_label.add_theme_color_override("font_color", tier_color)

@@ -18,6 +18,12 @@ func forge() -> Dictionary:
 	var tier_data = TierData.get_tier(tier)
 	var value = _calculate_forge_value(weapon_id, tier)
 	
+	# Check for critical forge
+	var is_crit = randf() < game_state.get_effective_crit_chance()
+	if is_crit:
+		value *= game_state.CRIT_MULTIPLIER
+	game_state.last_forge_was_crit = is_crit
+	
 	# Update state
 	game_state.items_forged[weapon_id] = game_state.items_forged.get(weapon_id, 0) + 1
 	game_state.total_items_forged += 1
@@ -31,7 +37,8 @@ func forge() -> Dictionary:
 		"tier": tier,
 		"tier_name": tier_data.get("name", "Common"),
 		"tier_color": tier_data.get("color", Color.WHITE),
-		"value": value
+		"value": value,
+		"is_crit": is_crit
 	}
 
 
@@ -137,7 +144,13 @@ func _calculate_forge_value(weapon_id: String, tier: int) -> float:
 	var tier_mult = TierData.get_tier_multiplier(tier)
 	var click_power = game_state.click_power
 	
-	return base_value * weapon_mult * tier_mult * click_power
+	# Add weapon mastery bonus
+	var mastery_bonus = 1.0 + game_state.get_weapon_mastery_bonus(weapon_id)
+	
+	# Add streak bonus
+	var streak_bonus = 1.0 + game_state.get_streak_bonus()
+	
+	return base_value * weapon_mult * tier_mult * click_power * mastery_bonus * streak_bonus
 
 
 func _check_tier_unlocks() -> void:
@@ -149,7 +162,9 @@ func _check_tier_unlocks() -> void:
 func get_weapon_value(weapon_id: String) -> float:
 	var base = WeaponData.get_base_value(weapon_id)
 	var weapon_mult = game_state.weapon_multipliers.get(weapon_id, 1.0)
-	return base * weapon_mult * game_state.click_power
+	var mastery_bonus = 1.0 + game_state.get_weapon_mastery_bonus(weapon_id)
+	var streak_bonus = 1.0 + game_state.get_streak_bonus()
+	return base * weapon_mult * game_state.click_power * mastery_bonus * streak_bonus
 
 
 func get_effective_auto_forge_rate() -> float:
