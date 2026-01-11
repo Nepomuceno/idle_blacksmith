@@ -589,8 +589,8 @@ func _on_window_resized() -> void:
 
 func _check_layout() -> void:
 	var size = get_viewport_rect().size
-	# Wide layout when actual pixels are >= 800 wide AND landscape
-	var new_is_wide = size.x >= 700 and size.x > size.y
+	# Wide layout when actual pixels are >= 600 wide AND landscape (more permissive)
+	var new_is_wide = size.x >= 600 and size.x > size.y
 	
 	if new_is_wide != is_wide_layout:
 		is_wide_layout = new_is_wide
