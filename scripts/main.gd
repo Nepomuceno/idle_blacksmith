@@ -78,18 +78,20 @@ var forge_sound: AudioStreamPlayer
 var upgrade_sound: AudioStreamPlayer
 var ascend_sound: AudioStreamPlayer
 
-# Timers
-var passive_timer: float = 0.0
-var autosave_timer: float = 0.0
-var auto_forge_timer: float = 0.0
-var auto_buy_timer: float = 0.0
-var last_tier_effect_time: float = 0.0
-var lore_tooltip_timer: float = 0.0
-const PASSIVE_TICK: float = 1.0
-const AUTOSAVE_INTERVAL: float = 30.0
-const AUTO_BUY_INTERVAL: float = 0.5  # Check every 0.5 seconds
-const MIN_TIER_EFFECT_INTERVAL: float = 0.15  # Max ~6 effects per second
-const LORE_TOOLTIP_INTERVAL: float = 120.0  # Show random lore every 2 minutes
+	# Timers
+	var passive_timer: float = 0.0
+	var autosave_timer: float = 0.0
+	var auto_forge_timer: float = 0.0
+	var auto_buy_timer: float = 0.0
+	var last_tier_effect_time: float = 0.0
+	var lore_tooltip_timer: float = 0.0
+	var ui_update_timer: float = 0.0
+	const PASSIVE_TICK: float = 1.0
+	const AUTOSAVE_INTERVAL: float = 30.0
+	const AUTO_BUY_INTERVAL: float = 0.5  # Check every 0.5 seconds
+	const MIN_TIER_EFFECT_INTERVAL: float = 0.15  # Max ~6 effects per second
+	const LORE_TOOLTIP_INTERVAL: float = 120.0  # Show random lore every 2 minutes
+	const UI_UPDATE_INTERVAL: float = 0.2  # Update UI every 200ms instead of every frame
 
 # Milestone tracking (to show popups only once)
 var last_unlocked_tier: int = 0
@@ -280,8 +282,9 @@ func _setup_tab_buttons() -> void:
 # ========== GAME LOOP ==========
 
 func _process(delta: float) -> void:
-	# Update streak timer
-	game_state.update_streak(delta)
+	# Update streak timer only when active
+	if game_state.forge_streak > 0:
+		game_state.update_streak(delta)
 	
 	# Passive income
 	if game_state.passive_income > 0:
@@ -355,9 +358,14 @@ func _process(delta: float) -> void:
 	if lore_tooltip_timer >= LORE_TOOLTIP_INTERVAL:
 		lore_tooltip_timer = 0.0
 		_show_random_lore_tooltip()
-	
+
+	# Throttled UI updates
+	ui_update_timer += delta
+	if ui_update_timer >= UI_UPDATE_INTERVAL:
+		ui_update_timer = 0.0
+		forge_ui.update_display()
+
 	_update_floating_texts(delta)
-	forge_ui.update_display()
 
 
 func _do_auto_forge() -> void:
@@ -398,11 +406,11 @@ func _do_auto_ascend() -> void:
 func _on_forge_requested() -> void:
 	# Register forge for streak bonus
 	game_state.register_forge_for_streak()
-	
+
 	var result = forge_manager.forge()
-	
+
 	_play_sound(forge_sound, true)
-	
+
 	# Show crit effect if applicable
 	var text_color = result["tier_color"]
 	var value_text = "+%s" % GameStateClass.format_number(result["value"])
@@ -410,15 +418,18 @@ func _on_forge_requested() -> void:
 		value_text = "CRIT! " + value_text
 		text_color = Color(1.0, 0.2, 0.2)  # Red for crits
 		_flash_screen(Color(1.0, 0.3, 0.1))  # Orange flash for crits
-	
+
 	_spawn_floating_text(value_text, text_color)
 	forge_ui.show_forge_result(result)
 	_animate_forge_button()
-	
+
 	if result["tier"] >= 2:
 		_spawn_tier_effect(result["tier"], result["tier_color"])
-	
+
 	_update_all_ui()
+	# Force immediate UI update after forge
+	ui_update_timer = UI_UPDATE_INTERVAL
+	forge_ui.update_display()
 
 
 func _on_weapon_selected(weapon_id: String) -> void:
@@ -915,6 +926,10 @@ func _flash_screen(color: Color) -> void:
 
 
 func _spawn_floating_text(text: String, color: Color) -> void:
+	# Limit floating texts to prevent performance issues at high forge rates
+	if floating_texts.size() >= 10:
+		return
+
 	var label = Label.new()
 	label.text = text
 	label.add_theme_font_size_override("font_size", 20)
@@ -922,10 +937,10 @@ func _spawn_floating_text(text: String, color: Color) -> void:
 	label.add_theme_color_override("font_outline_color", Color.BLACK)
 	label.add_theme_constant_override("outline_size", 2)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	
+
 	var forge_pos = forge_ui.forge_button.global_position + forge_ui.forge_button.size / 2
 	label.global_position = forge_pos + Vector2(randf_range(-40, 40), -30)
-	
+
 	add_child(label)
 	floating_texts.append({
 		"label": label,
