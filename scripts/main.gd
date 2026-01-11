@@ -78,7 +78,7 @@ var forge_sound: AudioStreamPlayer
 var upgrade_sound: AudioStreamPlayer
 var ascend_sound: AudioStreamPlayer
 
-	# Timers
+# Timers
 	var passive_timer: float = 0.0
 	var autosave_timer: float = 0.0
 	var auto_forge_timer: float = 0.0
@@ -106,13 +106,13 @@ func _ready() -> void:
 	_connect_signals()
 	_setup_tab_buttons()
 	_check_layout()
-	
+
 	# Only show tab in mobile mode - wide layout handles visibility differently
 	if not is_wide_layout:
 		_show_tab("forge")
-	
+
 	_update_all_ui()
-	
+
 	scene_ready = true
 	get_viewport().size_changed.connect(_on_window_resized)
 	_check_offline_progress()
