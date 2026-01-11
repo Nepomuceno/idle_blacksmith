@@ -171,16 +171,29 @@ func _init_ui_components() -> void:
 	# Initialize Forge UI
 	forge_ui = ForgeUIClass.new()
 	forge_ui.setup(game_state, forge_manager)
-	forge_ui.forge_button = %ForgeButton
-	forge_ui.ascend_button = %AscendButton
-	forge_ui.weapon_grid = %WeaponGrid
-	forge_ui.main_weapon_icon = %MainWeaponIcon
-	forge_ui.main_weapon_letter = %MainWeaponLetter
-	forge_ui.weapon_name_label = %WeaponNameLabel
-	forge_ui.value_label = %ValueLabel
-	forge_ui.streak_label = %StreakLabel
-	forge_ui.last_forged_label = %LastForgedLabel
-	forge_ui.ascension_progress = %AscensionProgress
+
+	# Safely assign UI references with null checks
+	if has_node("%ForgeButton"):
+		forge_ui.forge_button = %ForgeButton
+	if has_node("%AscendButton"):
+		forge_ui.ascend_button = %AscendButton
+	if has_node("%WeaponGrid"):
+		forge_ui.weapon_grid = %WeaponGrid
+	if has_node("%MainWeaponIcon"):
+		forge_ui.main_weapon_icon = %MainWeaponIcon
+	if has_node("%MainWeaponLetter"):
+		forge_ui.main_weapon_letter = %MainWeaponLetter
+	if has_node("%WeaponNameLabel"):
+		forge_ui.weapon_name_label = %WeaponNameLabel
+	if has_node("%ValueLabel"):
+		forge_ui.value_label = %ValueLabel
+	if has_node("%StreakLabel"):
+		forge_ui.streak_label = %StreakLabel
+	if has_node("%LastForgedLabel"):
+		forge_ui.last_forged_label = %LastForgedLabel
+	if has_node("%AscensionProgress"):
+		forge_ui.ascension_progress = %AscensionProgress
+
 	forge_ui.connect_buttons()
 	forge_ui.create_weapon_grid()
 	
@@ -585,22 +598,30 @@ func _check_layout() -> void:
 
 
 func _apply_layout() -> void:
-	if forge_content_ref == null or forge_ui.forge_button == null:
+	if forge_content_ref == null:
 		return
 	
 	if is_wide_layout:
-		forge_ui.forge_button.custom_minimum_size = Vector2(180, 60)
-		forge_ui.forge_button.add_theme_font_size_override("font_size", 26)
-		tab_bar_ref.visible = false
-		forge_content_ref.visible = true
-		upgrades_content_ref.visible = true
-		achieve_content_ref.visible = false
-		shop_content_ref.visible = false
+		if forge_ui.forge_button != null:
+			forge_ui.forge_button.custom_minimum_size = Vector2(180, 60)
+			forge_ui.forge_button.add_theme_font_size_override("font_size", 26)
+		if tab_bar_ref != null:
+			tab_bar_ref.visible = false
+		if forge_content_ref != null:
+			forge_content_ref.visible = true
+		if upgrades_content_ref != null:
+			upgrades_content_ref.visible = true
+		if achieve_content_ref != null:
+			achieve_content_ref.visible = false
+		if shop_content_ref != null:
+			shop_content_ref.visible = false
 		_setup_wide_layout()
 	else:
-		forge_ui.forge_button.custom_minimum_size = Vector2(200, 70)
-		forge_ui.forge_button.add_theme_font_size_override("font_size", 32)
-		tab_bar_ref.visible = true
+		if forge_ui.forge_button != null:
+			forge_ui.forge_button.custom_minimum_size = Vector2(200, 70)
+			forge_ui.forge_button.add_theme_font_size_override("font_size", 32)
+		if tab_bar_ref != null:
+			tab_bar_ref.visible = true
 		_setup_mobile_layout()
 		_show_tab(current_tab)
 	
@@ -831,14 +852,20 @@ func _update_gold_display() -> void:
 # ========== VISUAL EFFECTS ==========
 
 func _animate_forge_button() -> void:
+	if forge_ui.forge_button == null:
+		return
+
 	var tween = create_tween()
 	tween.tween_property(forge_ui.forge_button, "scale", Vector2(1.1, 1.1), 0.06).set_ease(Tween.EASE_OUT)
 	tween.tween_property(forge_ui.forge_button, "scale", Vector2(1.0, 1.0), 0.06).set_ease(Tween.EASE_IN)
-	
+
 	_spawn_forge_sparks()
 
 
 func _spawn_forge_sparks() -> void:
+	if forge_ui.forge_button == null:
+		return
+
 	var forge_center = forge_ui.forge_button.global_position + forge_ui.forge_button.size / 2
 	
 	var spark_count = randi_range(5, 8)
@@ -869,6 +896,9 @@ func _spawn_forge_sparks() -> void:
 
 
 func _spawn_tier_effect(tier: int, color: Color) -> void:
+	if forge_ui.forge_button == null:
+		return
+
 	var forge_center = forge_ui.forge_button.global_position + forge_ui.forge_button.size / 2
 	
 	# Reduce particles at high forge rates to prevent visual overload
@@ -937,6 +967,9 @@ func _spawn_floating_text(text: String, color: Color) -> void:
 	label.add_theme_color_override("font_outline_color", Color.BLACK)
 	label.add_theme_constant_override("outline_size", 2)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+	if forge_ui.forge_button == null:
+		return
 
 	var forge_pos = forge_ui.forge_button.global_position + forge_ui.forge_button.size / 2
 	label.global_position = forge_pos + Vector2(randf_range(-40, 40), -30)
@@ -1465,9 +1498,9 @@ func _show_weapon_unlock_popup(weapon_id: String) -> void:
 func _show_random_lore_tooltip() -> void:
 	# Only show if no popup is currently visible
 	var existing_popup = find_child("LorePopupOverlay", false, false)
-	if existing_popup:
+	if existing_popup or forge_ui.forge_button == null:
 		return
-	
+
 	# Position near the forge button
 	var position = forge_ui.forge_button.global_position + Vector2(
 		forge_ui.forge_button.size.x + 20,
