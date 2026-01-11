@@ -79,19 +79,19 @@ var upgrade_sound: AudioStreamPlayer
 var ascend_sound: AudioStreamPlayer
 
 # Timers
-	var passive_timer: float = 0.0
-	var autosave_timer: float = 0.0
-	var auto_forge_timer: float = 0.0
-	var auto_buy_timer: float = 0.0
-	var last_tier_effect_time: float = 0.0
-	var lore_tooltip_timer: float = 0.0
-	var ui_update_timer: float = 0.0
-	const PASSIVE_TICK: float = 1.0
-	const AUTOSAVE_INTERVAL: float = 30.0
-	const AUTO_BUY_INTERVAL: float = 0.5  # Check every 0.5 seconds
-	const MIN_TIER_EFFECT_INTERVAL: float = 0.15  # Max ~6 effects per second
-	const LORE_TOOLTIP_INTERVAL: float = 120.0  # Show random lore every 2 minutes
-	const UI_UPDATE_INTERVAL: float = 0.2  # Update UI every 200ms instead of every frame
+var passive_timer: float = 0.0
+var autosave_timer: float = 0.0
+var auto_forge_timer: float = 0.0
+var auto_buy_timer: float = 0.0
+var last_tier_effect_time: float = 0.0
+var lore_tooltip_timer: float = 0.0
+var ui_update_timer: float = 0.0
+const PASSIVE_TICK: float = 1.0
+const AUTOSAVE_INTERVAL: float = 30.0
+const AUTO_BUY_INTERVAL: float = 0.5  # Check every 0.5 seconds
+const MIN_TIER_EFFECT_INTERVAL: float = 0.15  # Max ~6 effects per second
+const LORE_TOOLTIP_INTERVAL: float = 120.0  # Show random lore every 2 minutes
+const UI_UPDATE_INTERVAL: float = 0.2  # Update UI every 200ms instead of every frame
 
 # Milestone tracking (to show popups only once)
 var last_unlocked_tier: int = 0
