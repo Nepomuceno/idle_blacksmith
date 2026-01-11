@@ -172,27 +172,17 @@ func _init_ui_components() -> void:
 	forge_ui = ForgeUIClass.new()
 	forge_ui.setup(game_state, forge_manager)
 
-	# Safely assign UI references with null checks
-	if has_node("%ForgeButton"):
-		forge_ui.forge_button = %ForgeButton
-	if has_node("%AscendButton"):
-		forge_ui.ascend_button = %AscendButton
-	if has_node("%WeaponGrid"):
-		forge_ui.weapon_grid = %WeaponGrid
-	if has_node("%MainWeaponIcon"):
-		forge_ui.main_weapon_icon = %MainWeaponIcon
-	if has_node("%MainWeaponLetter"):
-		forge_ui.main_weapon_letter = %MainWeaponLetter
-	if has_node("%WeaponNameLabel"):
-		forge_ui.weapon_name_label = %WeaponNameLabel
-	if has_node("%ValueLabel"):
-		forge_ui.value_label = %ValueLabel
-	if has_node("%StreakLabel"):
-		forge_ui.streak_label = %StreakLabel
-	if has_node("%LastForgedLabel"):
-		forge_ui.last_forged_label = %LastForgedLabel
-	if has_node("%AscensionProgress"):
-		forge_ui.ascension_progress = %AscensionProgress
+	# Assign UI references (they should exist by now)
+	forge_ui.forge_button = %ForgeButton
+	forge_ui.ascend_button = %AscendButton
+	forge_ui.weapon_grid = %WeaponGrid
+	forge_ui.main_weapon_icon = %MainWeaponIcon
+	forge_ui.main_weapon_letter = %MainWeaponLetter
+	forge_ui.weapon_name_label = %WeaponNameLabel
+	forge_ui.value_label = %ValueLabel
+	forge_ui.streak_label = %StreakLabel
+	forge_ui.last_forged_label = %LastForgedLabel
+	forge_ui.ascension_progress = %AscensionProgress
 
 	forge_ui.connect_buttons()
 	forge_ui.create_weapon_grid()
@@ -812,15 +802,17 @@ func _add_mobile_back_button(list_container: VBoxContainer) -> void:
 
 func _update_all_ui() -> void:
 	_update_gold_display()
-	forge_ui.update_display()
-	
+	if forge_ui != null:
+		forge_ui.update_display()
+
 	# In wide layout, upgrades are always visible so refresh them
-	if is_wide_layout:
+	if is_wide_layout and upgrades_ui != null:
 		upgrades_ui.refresh()
 
 
 func _update_gold_display() -> void:
-	gold_label_ref.text = game_state.get_formatted_gold() + " Gold"
+	if gold_label_ref != null:
+		gold_label_ref.text = game_state.get_formatted_gold() + " Gold"
 	
 	var info_parts = []
 	if game_state.passive_income > 0:
@@ -835,18 +827,22 @@ func _update_gold_display() -> void:
 		info_parts.append("Streak: %dx" % game_state.forge_streak)
 	
 	if info_parts.size() > 0:
-		passive_label_ref.text = " | ".join(info_parts)
-		passive_label_ref.visible = true
+		if passive_label_ref != null:
+			passive_label_ref.text = " | ".join(info_parts)
+			passive_label_ref.visible = true
 	else:
-		passive_label_ref.visible = false
-	
+		if passive_label_ref != null:
+			passive_label_ref.visible = false
+
 	# Ascension label with player title
 	if game_state.total_ascensions > 0 or game_state.ancient_souls > 0:
-		ascension_label_ref.visible = true
-		var title = game_state.get_player_title()
-		ascension_label_ref.text = "%s | %s Souls | Asc %d" % [title, GameStateClass.format_souls(game_state.ancient_souls), game_state.total_ascensions]
+		if ascension_label_ref != null:
+			ascension_label_ref.visible = true
+			var title = game_state.get_player_title()
+			ascension_label_ref.text = "%s | %s Souls | Asc %d" % [title, GameStateClass.format_souls(game_state.ancient_souls), game_state.total_ascensions]
 	else:
-		ascension_label_ref.visible = false
+		if ascension_label_ref != null:
+			ascension_label_ref.visible = false
 
 
 # ========== VISUAL EFFECTS ==========
@@ -1020,6 +1016,13 @@ func _check_offline_progress() -> void:
 
 
 func _check_daily_login() -> void:
+	# Delay daily login check to ensure UI is fully initialized
+	await get_tree().create_timer(0.1).timeout
+
+	# Only show popup if UI is ready
+	if not scene_ready or forge_ui == null or forge_ui.forge_button == null:
+		return
+
 	var login_result = game_state.check_daily_login()
 	if login_result["is_new_day"] and not game_state.daily_bonus_claimed:
 		# Delay to not overlap with offline popup

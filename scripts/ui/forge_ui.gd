@@ -43,10 +43,10 @@ func _preload_textures() -> void:
 
 
 func connect_buttons() -> void:
-	if forge_button:
+	if forge_button != null:
 		forge_button.pressed.connect(_on_forge_pressed)
 		forge_button.pivot_offset = forge_button.size / 2
-	if ascend_button:
+	if ascend_button != null:
 		ascend_button.pressed.connect(_on_ascend_pressed)
 		ascend_button.visible = false
 
